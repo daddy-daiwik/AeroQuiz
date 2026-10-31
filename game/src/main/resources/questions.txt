@@ -1,0 +1,80 @@
+{
+  question: "What is the capital of France?"
+  RED: "Paris"
+  BLUE: "London"
+  GREEN: "Berlin"
+  YELLOW: "Rome"
+  answer: RED
+}
+{
+  question: "What is 2 + 2?"
+  RED: "3"
+  BLUE: "4"
+  GREEN: "5"
+  YELLOW: "6"
+  answer: BLUE
+}
+{
+  question: "Which planet is closest to the Sun?"
+  RED: "Earth"
+  BLUE: "Mars"
+  GREEN: "Mercury"
+  YELLOW: "Venus"
+  answer: GREEN
+}
+{
+  question: "Who painted the Mona Lisa?"
+  RED: "Michelangelo"
+  BLUE: "Raphael"
+  GREEN: "Van Gogh"
+  YELLOW: "Leonardo da Vinci"
+  answer: YELLOW
+}
+{
+  question: "What is the chemical symbol for gold?"
+  RED: "Ag"
+  BLUE: "Fe"
+  GREEN: "Gd"
+  YELLOW: "Au"
+  answer: YELLOW
+}
+{
+  question: "How many sides does a hexagon have?"
+  RED: "5"
+  BLUE: "7"
+  GREEN: "6"
+  YELLOW: "8"
+  answer: GREEN
+}
+{
+  question: "Which country is the largest by land area?"
+  RED: "China"
+  BLUE: "United States"
+  GREEN: "Canada"
+  YELLOW: "Russia"
+  answer: YELLOW
+}
+{
+  question: "What is the speed of light (approx) in km/s?"
+  RED: "300,000"
+  BLUE: "150,000"
+  GREEN: "500,000"
+  YELLOW: "100,000"
+  answer: RED
+}
+{
+  question: "In which year did World War II end?"
+  RED: "1942"
+  BLUE: "1945"
+  GREEN: "1939"
+  YELLOW: "1950"
+  answer: BLUE
+}
+{
+  question: "What is the powerhouse of the cell?"
+  RED: "Nucleus"
+  BLUE: "Ribosome"
+  GREEN: "Mitochondria"
+  YELLOW: "Golgi body"
+  answer: GREEN
+}

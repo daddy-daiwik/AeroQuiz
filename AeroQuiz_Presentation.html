@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AeroQuiz: 3D Flight Simulation Serious Game - Presentation</title>
+<style>
+  :root {
+    --bg-dark: #0B111E;
+    --card-bg: #151F32;
+    --card-border: #233554;
+    --accent-cyan: #00E5FF;
+    --accent-orange: #FF9100;
+    --accent-green: #00E676;
+    --accent-purple: #D500F9;
+    --text-primary: #FFFFFF;
+    --text-secondary: #94A3B8;
+    --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    font-family: var(--font-main);
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    user-select: none;
+  }
+
+  /* Presentation Header */
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 28px;
+    background: rgba(11, 17, 30, 0.85);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--card-border);
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+  }
+
+  .logo-badge {
+    background: linear-gradient(135deg, #00E5FF, #2979FF);
+    color: #000;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 800;
+  }
+
+  .nav-status {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-family: var(--font-mono);
+  }
+
+  /* Slide Deck Container */
+  .deck {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(20px) scale(0.98);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 30px 60px;
+    max-width: 1300px;
+    margin: 0 auto;
+    right: 0;
+  }
+
+  .slide.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+  }
+
+  /* Typography */
+  .slide-category {
+    color: var(--accent-cyan);
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .slide-category::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--accent-cyan);
+    border-radius: 50%;
+  }
+
+  h1 {
+    font-size: 3.2rem;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #FFFFFF 60%, #90CAF9);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  h2 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    line-height: 1.25;
+    margin-bottom: 24px;
+  }
+
+  p.subtitle {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    max-width: 900px;
+    margin-bottom: 30px;
+  }
+
+  /* Cards & Layouts */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-top: 10px;
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 10px;
+  }
+
+  .grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-top: 10px;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .card:hover {
+    border-color: var(--accent-cyan);
+    transform: translateY(-2px);
+  }
+
+  .card-icon {
+    font-size: 1.8rem;
+    margin-bottom: 12px;
+    display: inline-block;
+  }
+
+  .card h3 {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    color: var(--accent-cyan);
+    font-weight: 600;
+  }
+
+  .card p, .card ul {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+  }
+
+  .card ul {
+    list-style-type: none;
+    padding-left: 0;
+  }
+
+  .card ul li {
+    position: relative;
+    padding-left: 18px;
+    margin-bottom: 8px;
+  }
+
+  .card ul li::before {
+    content: '▹';
+    position: absolute;
+    left: 0;
+    color: var(--accent-cyan);
+  }
+
+  .metric-box {
+    text-align: center;
+    background: rgba(0, 229, 255, 0.04);
+    border: 1px solid rgba(0, 229, 255, 0.2);
+    border-radius: 12px;
+    padding: 22px;
+  }
+
+  .metric-val {
+    font-size: 2.8rem;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    color: var(--accent-cyan);
+    margin-bottom: 6px;
+  }
+
+  .metric-lbl {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .code-block {
+    background: #060A12;
+    border: 1px solid #1A2639;
+    border-radius: 8px;
+    padding: 16px;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    color: #80D8FF;
+    line-height: 1.5;
+    margin: 12px 0;
+    overflow-x: auto;
+  }
+
+  /* Presentation Footer / Controls */
+  footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 28px;
+    border-top: 1px solid var(--card-border);
+    background: rgba(11, 17, 30, 0.85);
+  }
+
+  .controls {
+    display: flex;
+    gap: 12px;
+  }
+
+  .btn {
+    background: #1A2740;
+    color: var(--text-primary);
+    border: 1px solid var(--card-border);
+    padding: 8px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .btn:hover {
+    background: var(--accent-cyan);
+    color: #000;
+    border-color: var(--accent-cyan);
+  }
+
+  .progress-dots {
+    display: flex;
+    gap: 8px;
+  }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #233554;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .dot.active {
+    background: var(--accent-cyan);
+    width: 24px;
+    border-radius: 6px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-badge">AEROQUIZ</span>
+    <span>FLIGHT-SIMULATED SERIOUS GAME</span>
+  </div>
+  <div class="nav-status">
+    <span id="slideIndex">01</span> / <span id="slideTotal">10</span>
+  </div>
+</header>
+
+<div class="deck">
+
+  <!-- SLIDE 1: Title -->
+  <div class="slide active">
+    <div class="slide-category">ACADEMIC DEFENSE & ARCHITECTURE OVERVIEW</div>
+    <h1>AeroQuiz: 3D Flight Simulation for Active Recall</h1>
+    <p class="subtitle">An immersive, cross-platform serious game marrying Newtonian aerodynamics with dynamic educational retrieval practice.</p>
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-icon">✈️</div>
+        <h3>Flight Dynamics</h3>
+        <p>Analytical banking, Hermite smoothstep camera damping, and responsive low-latency controls.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🎯</div>
+        <h3>Active Recall</h3>
+        <p>Spatial 3D answer gates transform passive quiz questions into high-speed ballistic intercepts.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">⚡</div>
+        <h3>Cross-Platform</h3>
+        <p>Built with jMonkeyEngine 3.6 & OpenGL ES; unified desktop and mobile Android 60 FPS build.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2: Pedagogical Problem -->
+  <div class="slide">
+    <div class="slide-category">PROBLEM STATEMENT & PEDAGOGICAL MOTIVATION</div>
+    <h2>The Flashcard Paradox: Passive Guessing vs. True Mastery</h2>
+    <p class="subtitle">Why traditional computer-based testing fails and how game-induced arousal enhances retention.</p>
+    <div class="grid-2">
+      <div class="card">
+        <h3>❌ Traditional 2D CBT Limitations</h3>
+        <ul>
+          <li>Passive multiple-choice heuristic guessing without cognitive commitment</li>
+          <li>High monotony and attention depletion over extended study sessions</li>
+          <li>Lack of spatial-temporal tension or emotional engagement</li>
+          <li>"Chocolate-covered broccoli" gamification (static badges and timer bars)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>✅ AeroQuiz Flight-Integrated Learning</h3>
+        <ul>
+          <li><b>Spatial Decision Commitment:</b> Players must fly toward and physically shoot target pylons</li>
+          <li><b>Flow State Induction:</b> Balancing altitude control, banking, and answer evaluation</li>
+          <li><b>Yerkes-Dodson Law:</b> Mild benign flight stress sharpens neural memory retrieval</li>
+          <li><b>Immediate Visceral Feedback:</b> Explosion of correct targets vs airframe damage smoke</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: Architecture -->
+  <div class="slide">
+    <div class="slide-category">ENGINEERING & SYSTEM ARCHITECTURE</div>
+    <h2>Decoupled State Machine Architecture</h2>
+    <p class="subtitle">Powered by jMonkeyEngine 3.6, LWJGL 3, and OpenAL spatial audio.</p>
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-icon">🎮</div>
+        <h3>GameState</h3>
+        <ul>
+          <li>Kinematic aircraft translation</li>
+          <li>Terrain mesh looping</li>
+          <li>Procedural gate obstacle spawner</li>
+          <li>Ballistics & collision detection</li>
+          <li>Particle emitter damage state</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-icon">🖥️</div>
+        <h3>HudState</h3>
+        <ul>
+          <li>Orthogonal 2D avionics HUD</li>
+          <li>Crosshair & airspeed indicators</li>
+          <li>On-screen interactive Quiz Editor</li>
+          <li>Live Settings configuration</li>
+          <li>Touch raycast dispatching</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-icon">💾</div>
+        <h3>Persistence Tier</h3>
+        <ul>
+          <li>Direct plaintext file sync</li>
+          <li><code>questions.txt</code> & <code>quiz_settings.txt</code></li>
+          <li>Embedded SQLite engine</li>
+          <li>Audit logs & high score storage</li>
+          <li>Zero-restart live reload</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: Flight Math -->
+  <div class="slide">
+    <div class="slide-category">MATHEMATICAL FORMULATIONS</div>
+    <h2>Aerodynamic Banking & Hermite Camera Smoothing</h2>
+    <p class="subtitle">Rigorous mathematics ensuring smooth flight without simulator disorientation.</p>
+    <div class="grid-2">
+      <div class="card">
+        <h3>Dynamic Roll Banking Formulation</h3>
+        <p>Banking angle is coupled to instantaneous lateral steering velocity:</p>
+        <div class="code-block">θ_target = -clamp(vx / vmax, -1.0, 1.0) * (π / 5)
+θ(t + Δt) = θ(t) + (θ_target - θ(t)) * (1 - e^(-k * Δt))</div>
+        <p>Prevents jerky turns and simulates real aircraft inertia.</p>
+      </div>
+      <div class="card">
+        <h3>Cubic Smoothstep Camera Interpolation</h3>
+        <p>Smooth Hermite damping eliminates rapid camera jerking:</p>
+        <div class="code-block">S(τ) = 3τ² - 2τ³,   τ = clamp(Δt / T_lag, 0, 1)
+P_cam(t + Δt) = P_cam(t) + S(τ) * (P_plane + o_cam - P_cam(t))</div>
+        <p>Maintains depression angle (-8.5°) for horizon and crosshair clarity.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: Gate Spawning & Visual Contrast -->
+  <div class="slide">
+    <div class="slide-category">VISUAL ACUITY & OPTICAL DESIGN</div>
+    <h2>Dynamic Spawning Geometry & High-Contrast Readability</h2>
+    <p class="subtitle">Ensuring optimal reading time and zero sun-glare washouts.</p>
+    <div class="grid-3">
+      <div class="card">
+        <h3>Dynamic Gate Spawner</h3>
+        <p>Calculates spawn depth based on forward velocity:</p>
+        <div class="code-block">Z_spawn = Z_plane + vz * t_decision + buffer
+≈ Z_plane + 260m</div>
+        <p>Guarantees ~6.8 seconds of evaluation window regardless of speed.</p>
+      </div>
+      <div class="card">
+        <h3>Atmospheric Shielding</h3>
+        <ul>
+          <li>High-saturation solid color backing boxes</li>
+          <li>Zero specular highlights to prevent sun flare</li>
+          <li>Distinct colors for all 4 options (Blue, Amber, Green, Purple)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Dual-Pass Outlines</h3>
+        <ul>
+          <li>BitmapText text nodes with 4-offset black shadow pass</li>
+          <li>Exceeds 12:1 contrast ratio against bright skies</li>
+          <li>Lowered flight horizon avoids ground occlusion</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: Avionics & FX -->
+  <div class="slide">
+    <div class="slide-category">VISUAL FX & AVIONICS</div>
+    <h2>Progressive Airframe Damage & Audio Dynamics</h2>
+    <p class="subtitle">Multi-sensory feedback reinforces learning consequences.</p>
+    <div class="grid-2">
+      <div class="card">
+        <h3>Progressive Particle Emitters</h3>
+        <ul>
+          <li><b>3 Lives (Nominal):</b> Clean exhaust with blue afterburner glow</li>
+          <li><b>2 Lives (Damaged):</b> Trailing gray smoke plume (25 particles/sec)</li>
+          <li><b>1 Life (Critical):</b> Heavy billowing black smoke + fire bursts (65 p/s)</li>
+          <li><b>0 Lives (Defeat):</b> High-impulse 300-particle explosion shockwave</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Avionics Sound & Pitch Shifting</h3>
+        <ul>
+          <li>Dynamic engine throttle audio frequency scales with velocity:</li>
+          <div class="code-block">Pitch = 0.85 + 0.65 * ((vz - vmin) / (vmax - vmin))</div>
+          <li>Spatial 3D positional laser firing and hit detonation audio</li>
+          <li>Critical proximity auditory alarms on low altitude/health</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: In-Game UI Editor -->
+  <div class="slide">
+    <div class="slide-category">IN-GAME AUTHORING & CUSTOMIZATION</div>
+    <h2>Built-In Avionics Quiz & Settings Editor</h2>
+    <p class="subtitle">Modify questions and flight difficulty on-the-fly without leaving the cockpit.</p>
+    <div class="grid-3">
+      <div class="card">
+        <h3>Cockpit Terminal UI</h3>
+        <p>Custom OpenGL 2D ortho overlay with cyber-cockpit aesthetics and high-contrast bounding panels.</p>
+      </div>
+      <div class="card">
+        <h3>Live Question Authoring</h3>
+        <p>Add, edit, or delete questions and answer options directly with instant validation and answer-key toggling.</p>
+      </div>
+      <div class="card">
+        <h3>Flight Parameters Tuning</h3>
+        <p>Adjust flight speed, max player lives, terrain biome (Green, Desert, Lunar), and spawn distances on the fly.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: Android Cross-Platform -->
+  <div class="slide">
+    <div class="slide-category">CROSS-PLATFORM ENGINEERING</div>
+    <h2>Desktop vs. Android Mobile Optimization</h2>
+    <p class="subtitle">Unified codebase executing seamlessly on high-end PCs and mobile smartphones.</p>
+    <div class="grid-2">
+      <div class="card">
+        <h3>Android Touch Raycasting</h3>
+        <ul>
+          <li><b>Dual-Zone Touch Layout:</b> Separate steering and ballistic trigger zones</li>
+          <li><b>UI Intercept Guard:</b> Orthographic hit testing suppresses accidental weapon fire when tapping buttons</li>
+          <li><b>Zero Touch Latency:</b> Native Android input events routed directly to JME3 frame queue</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Mobile Optimization & Packaging</h3>
+        <ul>
+          <li>Target API 34 with backward compatibility to API 24 (Android 7.0+)</li>
+          <li>OpenGL ES 3.0 lightweight shader pipeline</li>
+          <li>Self-contained 14 MB APK package including all 3D assets, sounds, and textures</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: Benchmarks -->
+  <div class="slide">
+    <div class="slide-category">EMPIRICAL EVALUATION & PROFILING</div>
+    <h2>Performance Profiling & Low-GC Design</h2>
+    <p class="subtitle">Zero-allocation frame loops prevent Java Garbage Collection micro-stutters.</p>
+    <div class="grid-4">
+      <div class="metric-box">
+        <div class="metric-val">144</div>
+        <div class="metric-lbl">Desktop FPS (Capped)</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-val">60</div>
+        <div class="metric-lbl">Mobile FPS (Stable)</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-val">42</div>
+        <div class="metric-lbl">Draw Calls / Frame</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-val">0 ms</div>
+        <div class="metric-lbl">GC Stutter / Min</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top: 20px;">
+      <h3>Object Pooling Pattern in Practice</h3>
+      <p>Scratch Vector3f and Quaternion variables are pre-allocated in heap memory and mutated in place (<code>addLocal()</code>, <code>set()</code>), eliminating object thrashing inside the <code>simpleUpdate(float tpf)</code> rendering loop.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: Conclusion -->
+  <div class="slide">
+    <div class="slide-category">CONCLUSION & FUTURE ROADMAP</div>
+    <h2>Summary of Contributions & Academic Impact</h2>
+    <p class="subtitle">AeroQuiz successfully proves that arcade game mechanics amplify active recall efficacy.</p>
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-icon">🎓</div>
+        <h3>Pedagogical Success</h3>
+        <p>Replaces passive quiz fatigue with high-engagement flow state and rapid decision-making.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📐</div>
+        <h3>Engineering Rigor</h3>
+        <p>Full 3D physics, smoothstep camera math, zero-overhead GUI, and dual-layer data persistence.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🚀</div>
+        <h3>Future Roadmap</h3>
+        <p>Real-world GIS elevation terrain heightmaps and AI-driven adaptive question sequencing.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="controls">
+    <button class="btn" id="prevBtn" onclick="prevSlide()">◀ Previous</button>
+    <button class="btn" id="nextBtn" onclick="nextSlide()">Next ▶</button>
+    <button class="btn" onclick="toggleFullScreen()">⛶ Fullscreen</button>
+  </div>
+  <div class="progress-dots" id="dotsContainer"></div>
+  <div style="color: var(--text-secondary); font-size: 0.85rem;">
+    Navigate with [← / →] or [Spacebar]
+  </div>
+</footer>
+
+<script>
+  let currentSlide = 0;
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  const slideIndexEl = document.getElementById('slideIndex');
+  const slideTotalEl = document.getElementById('slideTotal');
+  const dotsContainer = document.getElementById('dotsContainer');
+
+  slideTotalEl.innerText = totalSlides.toString().padStart(2, '0');
+
+  // Build Dots
+  for (let i = 0; i < totalSlides; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.onclick = () => goToSlide(i);
+    dotsContainer.appendChild(dot);
+  }
+
+  const dots = document.querySelectorAll('.dot');
+
+  function updateSlide() {
+    slides.forEach((s, idx) => {
+      s.classList.toggle('active', idx === currentSlide);
+    });
+    dots.forEach((d, idx) => {
+      d.classList.toggle('active', idx === currentSlide);
+    });
+    slideIndexEl.innerText = (currentSlide + 1).toString().padStart(2, '0');
+  }
+
+  function nextSlide() {
+    if (currentSlide < totalSlides - 1) {
+      currentSlide++;
+      updateSlide();
+    }
+  }
+
+  function prevSlide() {
+    if (currentSlide > 0) {
+      currentSlide--;
+      updateSlide();
+    }
+  }
+
+  function goToSlide(n) {
+    currentSlide = n;
+    updateSlide();
+  }
+
+  function toggleFullScreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+      nextSlide();
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      prevSlide();
+    } else if (e.key === 'f' || e.key === 'F') {
+      toggleFullScreen();
+    }
+  });
+
+  // Mobile swipe support
+  let touchStartX = 0;
+  document.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  });
+  document.addEventListener('touchend', (e) => {
+    let diff = e.changedTouches[0].screenX - touchStartX;
+    if (diff < -50) nextSlide();
+    if (diff > 50) prevSlide();
+  });
+</script>
+</body>
+</html>

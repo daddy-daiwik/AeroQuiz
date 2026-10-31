@@ -1,0 +1,14 @@
+# AeroQuiz Configuration Settings
+# Modify any of these parameters to customize gameplay:
+
+# Maximum wrong answers before the plane bursts into flames and crashes.
+# Set to -1 for infinite lives.
+maxWrong: 2
+
+# Countdown timer limit in seconds for each question.
+# Set to -1 for no time limit.
+# Obstacles approach speed scales dynamically to arrive at the plane exactly when time expires!
+timePerQuestion: 15
+
+# Ground terrain environment: GRASS, SAND (or DESERT), SNOW (or ARCTIC), WATER (or OCEAN)
+terrain: SAND

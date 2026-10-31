@@ -1,0 +1,39 @@
+[versions]
+jme = "3.9.0-stable"
+
+appcompat = "1.4.0"
+googleMaterial = "1.4.0"
+constraintlayout = "2.1.1"
+junit4 = "4.13.2"
+androidxTestJunit = "1.1.3"
+espressoCore = "3.4.0"
+
+minie = '9.0.3'
+log4j-core = '2.26.1'
+log4j-api = '2.26.1'
+lemur = '1.16.0'
+lemur-proto = '1.13.0'
+
+[plugins]
+
+[libraries]
+jmeCore = { module = "org.jmonkeyengine:jme3-core", version.ref = "jme" }
+jmeJogg = { module = "org.jmonkeyengine:jme3-jogg", version.ref = "jme" }
+jmePlugins = { module = "org.jmonkeyengine:jme3-plugins", version.ref = "jme" }
+jmeDesktop = { module = "org.jmonkeyengine:jme3-desktop", version.ref = "jme" }
+jmeEffects = { module = "org.jmonkeyengine:jme3-effects", version.ref = "jme" }
+jmeLwjgl3 = { module = "org.jmonkeyengine:jme3-lwjgl3", version.ref = "jme" }
+jmeTerrain = { module = "org.jmonkeyengine:jme3-terrain", version.ref = "jme" }
+jmeNetworking = { module = "org.jmonkeyengine:jme3-networking", version.ref = "jme" }
+jmeNifty = { module = "org.jmonkeyengine:jme3-niftygui", version.ref = "jme" }
+jmeAndroid = { module = "org.jmonkeyengine:jme3-android", version.ref = "jme" }
+jmeAndroidNative = { module = "org.jmonkeyengine:jme3-android-native", version.ref = "jme" }
+
+
+
+
+minie = { module = 'com.github.stephengold:Minie', version.ref ='minie' }
+log4j-core = { module = 'org.apache.logging.log4j:log4j-core', version.ref ='log4j-core' }
+log4j-api = { module = 'org.apache.logging.log4j:log4j-api', version.ref ='log4j-api' }
+lemur = { module = 'com.simsilica:lemur', version.ref ='lemur' }
+lemur-proto = { module = 'com.simsilica:lemur-proto', version.ref ='lemur-proto' }

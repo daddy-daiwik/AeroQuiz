@@ -1,0 +1,33 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        
+        {
+            "type": "java",
+            "name": "Launch AeroQuiz",
+            "request": "launch",
+            "mainClass": "com.daddydaiwik.aeroquiz.desktopmodule.DesktopLauncher",
+            "osx": {
+                "vmArgs": "-XstartOnFirstThread -ea"
+            },
+            "vmArgs": "-ea"
+        },
+        
+        [IF=PC_VR]
+        {
+            "type": "java",
+            "name": "Launch AeroQuiz VR",
+            "request": "launch",
+            "mainClass": "com.daddydaiwik.aeroquiz.pcvr.VrLauncher",
+            "osx": {
+                "vmArgs": "-XstartOnFirstThread -ea"
+            },
+            "vmArgs": "-ea"
+        },
+        [/IF=JME_VR]
+
+    ]
+}

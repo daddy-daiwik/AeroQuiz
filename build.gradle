@@ -1,0 +1,37 @@
+plugins {
+    id 'com.android.application' version '8.5.2' apply false
+}
+
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+
+
+
+subprojects {
+    ext {
+        JAVA_VERSION = 17
+    }
+
+    plugins.withType(JavaPlugin) {
+        java {
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(JAVA_VERSION)
+            }
+            sourceCompatibility = JavaVersion.toVersion(JAVA_VERSION)
+            targetCompatibility = JavaVersion.toVersion(JAVA_VERSION)
+        }
+    }
+}
+
+
+task buildAllDistributions {
+    dependsOn ':desktop:buildAllDistributions'
+
+    doLast {
+        println(" #### Check the individual modules build/distributions folders for distributable zips etc #### ")
+    }
+}
+

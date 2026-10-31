@@ -1,0 +1,43 @@
+
+[
+  {
+    question: "Which planet is known as the Red Planet?",
+    RED: "Venus",
+    BLUE: "Mars",
+    GREEN: "Jupiter",
+    YELLOW: "Saturn",
+    answer: BLUE
+  },
+  {
+    question: "Which is the largest ocean in the world?",
+    RED: "Atlantic Ocean",
+    BLUE: "Indian Ocean",
+    GREEN: "Pacific Ocean",
+    YELLOW: "Arctic Ocean",
+    answer: GREEN
+  },
+  {
+    question: "Who wrote the Indian national anthem?",
+    RED: "Mahatma Gandhi",
+    BLUE: "Bankim Chandra Chatterjee",
+    GREEN: "Rabindranath Tagore",
+    YELLOW: "Sarojini Naidu",
+    answer: GREEN
+  },
+  {
+    question: "Which is the largest continent in the world?",
+    RED: "Africa",
+    BLUE: "Europe",
+    GREEN: "North America",
+    YELLOW: "Asia",
+    answer: YELLOW
+  },
+  {
+    question: "What is the national animal of India?",
+    RED: "Asiatic Lion",
+    BLUE: "Bengal Tiger",
+    GREEN: "Indian Elephant",
+    YELLOW: "Leopard",
+    answer: BLUE
+  }
+]

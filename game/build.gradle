@@ -1,0 +1,21 @@
+plugins {
+    id 'java-library'
+    id "io.github.0ffz.github-packages" version "1.2.1" // Plugin for anonymous inclusion of artifacts hosted in github package registry
+}
+
+dependencies {
+    api libs.jmeCore
+    runtimeOnly libs.jmeJogg
+    runtimeOnly libs.jmePlugins
+
+    api libs.jmeEffects
+    
+
+
+    api libs.minie
+    api libs.log4j.core
+    api libs.log4j.api
+    api libs.lemur
+    api libs.lemur.proto
+    api 'org.xerial:sqlite-jdbc:3.49.1.0'
+}
