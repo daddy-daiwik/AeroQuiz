@@ -126,7 +126,8 @@ public class QuizLoader {
         return "maxWrong: " + s.getMaxWrong() + "\n" +
                "timePerQuestion: " + (int) s.getTimePerQuestion() + "\n" +
                "terrain: " + s.getTerrain() + "\n" +
-               "obstacleShape: " + s.getObstacleShape() + "\n";
+               "obstacleShape: " + s.getObstacleShape() + "\n" +
+               "aircraft: " + s.getAircraft().name() + "\n";
     }
 
     public static void applySettingsFromString(String content) {
@@ -316,6 +317,16 @@ public class QuizLoader {
         } else if (k.equals("TERRAIN") || k.equals("GROUND") || k.equals("THEME")) {
             activeSettings.setTerrain(v);
             LOG.info("Settings: terrain = " + activeSettings.getTerrain());
+            return true;
+        } else if (k.equals("AIRCRAFT") || k.equals("PLANE") || k.equals("VEHICLE")) {
+            if (v.contains("HELI")) {
+                activeSettings.setAircraft(QuizSettings.AircraftType.HELICOPTER);
+            } else if (v.contains("CAR") || v.contains("PAGANI")) {
+                activeSettings.setAircraft(QuizSettings.AircraftType.FLYING_CAR);
+            } else {
+                activeSettings.setAircraft(QuizSettings.AircraftType.PLANE);
+            }
+            LOG.info("Settings: aircraft = " + activeSettings.getAircraft());
             return true;
         }
         return false;

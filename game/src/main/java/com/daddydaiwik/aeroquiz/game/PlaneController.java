@@ -110,6 +110,12 @@ public class PlaneController extends AbstractAppState {
 
     private Node     planeNode;
     private Node     propellerPivot;
+    private Node     heliRotorPivot;
+    private Spatial  heliTailBladeA;
+    private Spatial  heliTailBladeB;
+    private final List<Spatial> animatedWheels = new ArrayList<>();
+    private Vector3f laserMuzzleOffset = new Vector3f(0f, 0.2f, -2.6f);
+    private QuizSettings.AircraftType currentAircraft = QuizSettings.AircraftType.PLANE;
 
     private final List<Geometry> bodyParts = new ArrayList<>();
     private int damageLevel = 0;
@@ -168,10 +174,25 @@ public class PlaneController extends AbstractAppState {
             planeNode.move(0f, 0f, -PLANE_SPEED * tpf);
         }
 
-        // Continuously rotate propeller around its forward axis
+        // Continuously animate propellers, rotors, or wheels
+        float spinSpeed = dying ? 8f : (nameInput ? 18f : 45f);
         if (propellerPivot != null) {
-            float spinSpeed = dying ? 8f : 45f;
             propellerPivot.rotate(0f, 0f, spinSpeed * tpf);
+        }
+        if (heliRotorPivot != null) {
+            heliRotorPivot.rotate(0f, spinSpeed * 1.35f * tpf, 0f);
+        }
+        if (heliTailBladeA != null) {
+            heliTailBladeA.rotate(spinSpeed * 2.2f * tpf, 0f, 0f);
+        }
+        if (heliTailBladeB != null) {
+            heliTailBladeB.rotate(spinSpeed * 2.2f * tpf, 0f, 0f);
+        }
+        if (!animatedWheels.isEmpty()) {
+            float wheelSpeed = (nameInput || dying) ? 0f : spinSpeed * 0.4f;
+            for (Spatial w : animatedWheels) {
+                w.rotate(wheelSpeed * tpf, 0f, 0f);
+            }
         }
 
         if (shifting)               updateShift(tpf);
@@ -331,12 +352,53 @@ public class PlaneController extends AbstractAppState {
             planeNode.removeFromParent();
             bodyParts.clear();
             propellerPivot = null;
+            heliRotorPivot = null;
+            heliTailBladeA = null;
+            heliTailBladeB = null;
+            animatedWheels.clear();
         }
         buildPlane();
 
         // Snap camera back to initial takeoff position
         updateCamera(0.01f);
         LOG.info("PlaneController: resetPlane() completed — plane restored to pristine state at (0, 0.2, 0).");
+    }
+
+    public void switchAircraft(QuizSettings.AircraftType type) {
+        if (type == null) return;
+        this.currentAircraft = type;
+        if (QuizLoader.getSettings() != null) {
+            QuizLoader.getSettings().setAircraft(type);
+        }
+        rebuildPlane();
+        LOG.info("PlaneController: switched aircraft to " + type);
+    }
+
+    public void rebuildPlane() {
+        Vector3f pos = (planeNode != null) ? planeNode.getLocalTranslation().clone() : new Vector3f(0f, -0.2f, 0f);
+        Quaternion rot = (planeNode != null) ? planeNode.getLocalRotation().clone() : new Quaternion().fromAngleAxis(DEFAULT_TILT_RAD, Vector3f.UNIT_X);
+
+        if (planeNode != null) {
+            planeNode.removeFromParent();
+            planeNode.detachAllChildren();
+        }
+        bodyParts.clear();
+        propellerPivot = null;
+        heliRotorPivot = null;
+        heliTailBladeA = null;
+        heliTailBladeB = null;
+        animatedWheels.clear();
+
+        buildPlane();
+
+        if (planeNode != null) {
+            planeNode.setLocalTranslation(pos);
+            planeNode.setLocalRotation(rot);
+        }
+    }
+
+    public QuizSettings.AircraftType getCurrentAircraft() {
+        return currentAircraft;
     }
 
     public void triggerDeath() {
@@ -369,6 +431,11 @@ public class PlaneController extends AbstractAppState {
     // -------------------------------------------------------------------------
 
     private void buildPlane() {
+        if (QuizLoader.getSettings() != null) {
+            currentAircraft = QuizLoader.getSettings().getAircraft();
+        }
+        if (currentAircraft == null) currentAircraft = QuizSettings.AircraftType.PLANE;
+
         planeNode = new Node("Plane");
         // Start below options grid
         planeNode.setLocalTranslation(0f, -0.2f, 0f);
@@ -378,10 +445,36 @@ public class PlaneController extends AbstractAppState {
         planeNode.setLocalRotation(tilt);
 
         AssetRegistry reg = app.getAssetRegistry();
+        boolean success = false;
+
+        switch (currentAircraft) {
+            case HELICOPTER -> success = buildHelicopter(reg);
+            case FLYING_CAR -> success = buildFlyingCar(reg);
+            default         -> success = buildBiplane(reg);
+        }
+
+        if (!success && currentAircraft != QuizSettings.AircraftType.PLANE) {
+            LOG.warning("PlaneController: " + currentAircraft + " build failed, falling back to Biplane.");
+            success = buildBiplane(reg);
+        }
+
+        if (!success) {
+            // Primitive fallback (scaled up)
+            ColorRGBA col = DAMAGE_COLORS[0];
+            addBodyPart("Fuselage",  0.6f,  0.45f, 2.2f,  0f,    0f,    0f,    col);
+            addBodyPart("LeftWing",  2.4f,  0.15f, 0.8f, -2.4f,  0f,    0f,    col);
+            addBodyPart("RightWing", 2.4f,  0.15f, 0.8f,  2.4f,  0f,    0f,    col);
+            addBodyPart("TailFin",   0.15f, 0.75f, 0.5f,  0f,    0.6f, -1.8f,  col);
+            laserMuzzleOffset = new Vector3f(0f, 0.2f, -2.6f);
+        }
+
+        app.getRootNode().attachChild(planeNode);
+    }
+
+    private boolean buildBiplane(AssetRegistry reg) {
         Spatial planeBody = null;
         Spatial propModel = null;
 
-        // Check if separate plane-without-propeller and propeller models are available
         if (reg != null && reg.has(AssetRegistry.PLANE_NOPROP)) {
             try {
                 planeBody = app.getAssetManager().loadModel(reg.path(AssetRegistry.PLANE_NOPROP));
@@ -400,7 +493,6 @@ public class PlaneController extends AbstractAppState {
             }
         }
 
-        // Fallback to unified plane model if plane-without-propeller wasn't found
         if (planeBody == null && reg != null && reg.has(AssetRegistry.PLANE_MODEL)) {
             try {
                 planeBody = app.getAssetManager().loadModel(reg.path(AssetRegistry.PLANE_MODEL));
@@ -410,70 +502,198 @@ public class PlaneController extends AbstractAppState {
             }
         }
 
-        if (planeBody != null) {
+        if (planeBody == null) return false;
+
+        try {
+            Node modelRoot = new Node("BiplaneModelRoot");
+            modelRoot.attachChild(planeBody);
+
+            if (propModel != null) {
+                propellerPivot = new Node("PropellerPivot");
+                Node propCentering = new Node("PropCentering");
+                propModel.setLocalTranslation(0f, -0.9f, 0f);
+                propCentering.attachChild(propModel);
+                propCentering.setLocalScale(1.85f);
+                propellerPivot.attachChild(propCentering);
+                propellerPivot.setLocalTranslation(0f, 1.6f, 3.88f);
+                modelRoot.attachChild(propellerPivot);
+                LOG.info("PlaneController: attached enlarged spinning propeller (scale 1.85) to plane nose.");
+            }
+
+            Quaternion fixYaw = new Quaternion().fromAngleAxis(FastMath.PI, Vector3f.UNIT_Y);
+            modelRoot.setLocalRotation(fixYaw);
+
+            planeNode.attachChild(modelRoot);
+            planeNode.updateGeometricState();
+
+            BoundingVolume bv = planeNode.getWorldBound();
+            if (bv instanceof BoundingBox) {
+                BoundingBox bb = (BoundingBox) bv;
+                float halfSpan = Math.max(bb.getXExtent(), bb.getZExtent());
+                float currentSpan = halfSpan * 2f;
+                if (currentSpan > 0.001f) {
+                    float scale = TARGET_WINGSPAN / currentSpan;
+                    modelRoot.setLocalScale(scale);
+                    LOG.info(String.format("PlaneController: biplane span %.2f -> scaled x%.3f -> %.2f",
+                            currentSpan, scale, TARGET_WINGSPAN));
+                }
+            }
+
+            modelRoot.depthFirstTraversal(sp -> {
+                if (sp instanceof Geometry) {
+                    bodyParts.add((Geometry) sp);
+                }
+            });
+
+            laserMuzzleOffset = new Vector3f(0f, 0.2f, -2.6f);
+            LOG.info("PlaneController: assembled 3D Biplane with spinning propeller.");
+            return true;
+        } catch (Exception e) {
+            LOG.warning("PlaneController: buildBiplane failed: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private boolean buildHelicopter(AssetRegistry reg) {
+        Spatial heliBody = null;
+        Spatial propModel = null;
+
+        if (reg != null && reg.has(AssetRegistry.HELI_MODEL)) {
             try {
-                Node modelRoot = new Node("PlaneModelRoot");
-                modelRoot.attachChild(planeBody);
-
-                // If propeller model is loaded, assemble it at the plane's nose shaft stub
-                if (propModel != null) {
-                    propellerPivot = new Node("PropellerPivot");
-                    // Center the propeller hub (hub was at Y=0.9 in GLTF space)
-                    Node propCentering = new Node("PropCentering");
-                    propModel.setLocalTranslation(0f, -0.9f, 0f);
-                    propCentering.attachChild(propModel);
-                    propCentering.setLocalScale(1.85f); // Enlarged prominent propeller
-                    propellerPivot.attachChild(propCentering);
-
-                    // Position at nose shaft stub: X=0, Y=1.6, Z=3.88
-                    propellerPivot.setLocalTranslation(0f, 1.6f, 3.88f);
-                    modelRoot.attachChild(propellerPivot);
-                    LOG.info("PlaneController: attached enlarged spinning propeller (scale 1.85) to plane nose.");
-                }
-
-                // 180 deg Y flip so nose points forward in -Z of the game world
-                Quaternion fixYaw = new Quaternion().fromAngleAxis(FastMath.PI, Vector3f.UNIT_Y);
-                modelRoot.setLocalRotation(fixYaw);
-
-                planeNode.attachChild(modelRoot);
-                planeNode.updateGeometricState();
-
-                BoundingVolume bv = planeNode.getWorldBound();
-                if (bv instanceof BoundingBox) {
-                    BoundingBox bb = (BoundingBox) bv;
-                    float halfSpan = Math.max(bb.getXExtent(), bb.getZExtent());
-                    float currentSpan = halfSpan * 2f;
-                    if (currentSpan > 0.001f) {
-                        float scale = TARGET_WINGSPAN / currentSpan;
-                        modelRoot.setLocalScale(scale);
-                        LOG.info(String.format("PlaneController: model span %.2f -> scaled x%.3f -> %.2f (Enlarged)",
-                                currentSpan, scale, TARGET_WINGSPAN));
-                    }
-                }
-
-                modelRoot.depthFirstTraversal(sp -> {
-                    if (sp instanceof Geometry) {
-                        bodyParts.add((Geometry) sp);
-                    }
-                });
-
-                app.getRootNode().attachChild(planeNode);
-                LOG.info("PlaneController: assembled 3D plane with spinning propeller.");
-                return;
+                heliBody = app.getAssetManager().loadModel(reg.path(AssetRegistry.HELI_MODEL));
+                LOG.info("PlaneController: loaded attack_heli model.");
             } catch (Exception e) {
-                LOG.warning("PlaneController: model load failed, using primitives: " + e.getMessage());
-                planeNode.detachAllChildren();
+                LOG.warning("PlaneController: failed loading attack_heli: " + e.getMessage());
             }
         }
 
-        // Primitive fallback (scaled up)
-        ColorRGBA col = DAMAGE_COLORS[0];
-        addBodyPart("Fuselage",  0.6f,  0.45f, 2.2f,  0f,    0f,    0f,    col);
-        addBodyPart("LeftWing",  2.4f,  0.15f, 0.8f, -2.4f,  0f,    0f,    col);
-        addBodyPart("RightWing", 2.4f,  0.15f, 0.8f,  2.4f,  0f,    0f,    col);
-        addBodyPart("TailFin",   0.15f, 0.75f, 0.5f,  0f,    0.6f, -1.8f,  col);
+        if (reg != null && reg.has(AssetRegistry.HELI_ROTOR)) {
+            try {
+                propModel = app.getAssetManager().loadModel(reg.path(AssetRegistry.HELI_ROTOR));
+                LOG.info("PlaneController: loaded heli_propeller rotor model.");
+            } catch (Exception e) {
+                LOG.warning("PlaneController: failed loading heli_propeller: " + e.getMessage());
+            }
+        }
 
-        app.getRootNode().attachChild(planeNode);
+        if (heliBody == null) return false;
+
+        try {
+            Node modelRoot = new Node("HeliModelRoot");
+            modelRoot.attachChild(heliBody);
+
+            if (propModel != null) {
+                heliRotorPivot = new Node("HeliRotorPivot");
+                Node rotorCentering = new Node("RotorCentering");
+                rotorCentering.attachChild(propModel);
+                rotorCentering.setLocalScale(1.95f);
+                heliRotorPivot.attachChild(rotorCentering);
+
+                // Mount at top of engine fairing (X=0, Y=3.35, Z=-0.8)
+                heliRotorPivot.setLocalTranslation(0f, 3.35f, -0.8f);
+                modelRoot.attachChild(heliRotorPivot);
+                LOG.info("PlaneController: attached enlarged Apache main rotor to helicopter roof.");
+            }
+
+            // Find tail rotor blades inside attack_heli
+            heliBody.depthFirstTraversal(sp -> {
+                if ("tail_blade_a".equalsIgnoreCase(sp.getName())) {
+                    heliTailBladeA = sp;
+                } else if ("tail_blade_b".equalsIgnoreCase(sp.getName())) {
+                    heliTailBladeB = sp;
+                }
+            });
+
+            Quaternion fixYaw = new Quaternion().fromAngleAxis(FastMath.PI, Vector3f.UNIT_Y);
+            modelRoot.setLocalRotation(fixYaw);
+
+            planeNode.attachChild(modelRoot);
+            planeNode.updateGeometricState();
+
+            BoundingVolume bv = planeNode.getWorldBound();
+            if (bv instanceof BoundingBox) {
+                BoundingBox bb = (BoundingBox) bv;
+                float halfSpan = Math.max(bb.getXExtent(), bb.getZExtent());
+                float currentSpan = halfSpan * 2f;
+                if (currentSpan > 0.001f) {
+                    float scale = 8.6f / currentSpan;
+                    modelRoot.setLocalScale(scale);
+                    LOG.info(String.format("PlaneController: helicopter span %.2f -> scaled x%.3f -> 8.60",
+                            currentSpan, scale));
+                }
+            }
+
+            modelRoot.depthFirstTraversal(sp -> {
+                if (sp instanceof Geometry) {
+                    bodyParts.add((Geometry) sp);
+                }
+            });
+
+            laserMuzzleOffset = new Vector3f(0f, 0.35f, -3.2f);
+            LOG.info("PlaneController: assembled 3D Apache Attack Helicopter with twin rotating rotors.");
+            return true;
+        } catch (Exception e) {
+            LOG.warning("PlaneController: buildHelicopter failed: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private boolean buildFlyingCar(AssetRegistry reg) {
+        Spatial carBody = null;
+
+        if (reg != null && reg.has(AssetRegistry.CAR_MODEL)) {
+            try {
+                carBody = app.getAssetManager().loadModel(reg.path(AssetRegistry.CAR_MODEL));
+                LOG.info("PlaneController: loaded flying_car model.");
+            } catch (Exception e) {
+                LOG.warning("PlaneController: failed loading flying_car: " + e.getMessage());
+            }
+        }
+
+        if (carBody == null) return false;
+
+        try {
+            Node modelRoot = new Node("CarModelRoot");
+            modelRoot.attachChild(carBody);
+
+            carBody.depthFirstTraversal(sp -> {
+                if (sp.getName() != null && sp.getName().toLowerCase().contains("tire")) {
+                    animatedWheels.add(sp);
+                }
+            });
+
+            Quaternion fixYaw = new Quaternion().fromAngleAxis(FastMath.PI, Vector3f.UNIT_Y);
+            modelRoot.setLocalRotation(fixYaw);
+
+            planeNode.attachChild(modelRoot);
+            planeNode.updateGeometricState();
+
+            BoundingVolume bv = planeNode.getWorldBound();
+            if (bv instanceof BoundingBox) {
+                BoundingBox bb = (BoundingBox) bv;
+                float halfSpan = Math.max(bb.getXExtent(), bb.getZExtent());
+                float currentSpan = halfSpan * 2f;
+                if (currentSpan > 0.001f) {
+                    float scale = 7.6f / currentSpan;
+                    modelRoot.setLocalScale(scale);
+                    LOG.info(String.format("PlaneController: flying car span %.2f -> scaled x%.3f -> 7.60",
+                            currentSpan, scale));
+                }
+            }
+
+            modelRoot.depthFirstTraversal(sp -> {
+                if (sp instanceof Geometry) {
+                    bodyParts.add((Geometry) sp);
+                }
+            });
+
+            laserMuzzleOffset = new Vector3f(0f, 0.15f, -2.5f);
+            LOG.info("PlaneController: assembled 3D Pagani Aero-Car with aerodynamic flight wings.");
+            return true;
+        } catch (Exception e) {
+            LOG.warning("PlaneController: buildFlyingCar failed: " + e.getMessage());
+            return false;
+        }
     }
 
     private void addBodyPart(String name, float xE, float yE, float zE,
@@ -543,7 +763,7 @@ public class PlaneController extends AbstractAppState {
         mat.setColor("Color", new ColorRGBA(1f, 0.95f, 0.35f, 1f));
         proj.setMaterial(mat);
 
-        Vector3f nose = planeNode.getWorldTranslation().add(0f, 0.2f, -2.6f);
+        Vector3f nose = planeNode.getWorldTranslation().add(laserMuzzleOffset);
         proj.setLocalTranslation(nose);
         app.getRootNode().attachChild(proj);
 

@@ -19,6 +19,23 @@ public class QuizSettings {
         CYLINDER
     }
 
+    public enum AircraftType {
+        PLANE("STUNT BIPLANE", "Classic prop stunt plane with spinning nose propeller"),
+        HELICOPTER("ATTACK HELICOPTER", "Armored combat gunship with rotating twin rotors"),
+        FLYING_CAR("PAGANI AERO-CAR", "Winged supersonic hypercar with quad jet thrusters");
+
+        private final String displayName;
+        private final String description;
+
+        AircraftType(String displayName, String description) {
+            this.displayName = displayName;
+            this.description = description;
+        }
+
+        public String getDisplayName() { return displayName; }
+        public String getDescription() { return description; }
+    }
+
     /** Maximum wrong answers before plane explodes. Default 3; -1 means infinite lives. */
     private int maxWrong = 3;
 
@@ -30,6 +47,17 @@ public class QuizSettings {
 
     /** Ground terrain type: GRASS, SAND (DESERT), SNOW (ARCTIC), WATER (OCEAN). */
     private String terrain = "GRASS";
+
+    /** Selected aircraft/vehicle to fly. */
+    private AircraftType aircraft = AircraftType.PLANE;
+
+    public AircraftType getAircraft() {
+        return aircraft;
+    }
+
+    public void setAircraft(AircraftType aircraft) {
+        this.aircraft = (aircraft != null) ? aircraft : AircraftType.PLANE;
+    }
 
     public int getMaxWrong() {
         return maxWrong;
@@ -70,6 +98,7 @@ public class QuizSettings {
                 ", timePerQuestion=" + timePerQuestion +
                 ", obstacleShape=" + obstacleShape +
                 ", terrain=" + terrain +
+                ", aircraft=" + aircraft +
                 '}';
     }
 }

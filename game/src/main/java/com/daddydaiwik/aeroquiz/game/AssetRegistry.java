@@ -48,6 +48,9 @@ public class AssetRegistry {
     public static final String PLANE_MODEL     = "Models/plane.j3o";
     public static final String PLANE_NOPROP    = "Models/plane-without-propeller.j3o";
     public static final String PROPELLER_MODEL = "Models/propeller.j3o";
+    public static final String HELI_MODEL      = "Models/attack_heli.j3o";
+    public static final String HELI_ROTOR      = "Models/heli_propeller.j3o";
+    public static final String CAR_MODEL       = "Models/flying_car.j3o";
     public static final String OBS_SHARED      = "Models/obstacle.j3o";
     public static final String OBS_RED      = "Models/obstacle_red.j3o";
     public static final String OBS_BLUE     = "Models/obstacle_blue.j3o";
@@ -103,6 +106,9 @@ public class AssetRegistry {
         probeModel(PLANE_NOPROP);
         probeModel(PROPELLER_MODEL);
         probeModel(PLANE_MODEL);
+        probeModel(HELI_MODEL);
+        probeModel(HELI_ROTOR);
+        probeModel(CAR_MODEL);
         probeModel(OBS_SHARED);
         probeModel(OBS_RED);
         probeModel(OBS_BLUE);

@@ -91,6 +91,9 @@ public class HudState extends AbstractAppState {
     private BitmapText regFooterHint;
     private Geometry   regPanelBg;
     private Geometry   regInputBoxBg;
+    private BitmapText regAircraftText;
+    private static final QuizSettings.AircraftType[] AIRCRAFT_PRESETS = QuizSettings.AircraftType.values();
+    private int aircraftPresetIndex = 0;
 
     private final StringBuilder nameBuffer = new StringBuilder("Maheep");
     private float cursorTimer = 0f;
@@ -109,6 +112,7 @@ public class HudState extends AbstractAppState {
     private BitmapText edTerrainText;
     private BitmapText edLivesText;
     private BitmapText edTimerText;
+    private BitmapText edAircraftText;
     private BitmapText edQNavText;
     private BitmapText edQTitleText;
     private BitmapText edOpt1Text;
@@ -172,6 +176,16 @@ public class HudState extends AbstractAppState {
         app.getGuiNode().attachChild(hudNode);
 
         buildHud();
+        QuizSettings s = QuizLoader.getSettings();
+        if (s != null && s.getAircraft() != null) {
+            for (int i = 0; i < AIRCRAFT_PRESETS.length; i++) {
+                if (AIRCRAFT_PRESETS[i] == s.getAircraft()) {
+                    aircraftPresetIndex = i;
+                    break;
+                }
+            }
+        }
+        updateAircraftUiText();
         app.getInputManager().addRawInputListener(rawInputListener);
     }
 
@@ -549,102 +563,139 @@ public class HudState extends AbstractAppState {
 
         // Callsign Prompt
         regPromptText = new BitmapText(font);
-        regPromptText.setSize(font.getCharSet().getRenderedSize() * 1.1f);
+        regPromptText.setSize(font.getCharSet().getRenderedSize() * 1.05f);
         regPromptText.setColor(new ColorRGBA(0.85f, 0.95f, 1.0f, 1f));
-        regPromptText.setText("PILOT CALLSIGN (SELECT OR TYPE):");
-        regPromptText.setLocalTranslation(50f, ph - 80f, 0f);
+        regPromptText.setText("1. PILOT CALLSIGN (SELECT OR TYPE):");
+        regPromptText.setLocalTranslation(50f, ph - 70f, 0f);
         nameInputNode.attachChild(regPromptText);
 
         // Input text box
-        regInputBoxBg = makeQuad("RegInputBoxBg", 420f, 50f, 50f, ph - 138f, new ColorRGBA(0.08f, 0.14f, 0.26f, 0.95f));
+        regInputBoxBg = makeQuad("RegInputBoxBg", 420f, 42f, 50f, ph - 116f, new ColorRGBA(0.08f, 0.14f, 0.26f, 0.95f));
         nameInputNode.attachChild(regInputBoxBg);
 
-        Geometry regInputBoxBorder = makeQuad("RegInputBoxBorder", 420f, 2f, 50f, ph - 138f, new ColorRGBA(0.2f, 0.8f, 1.0f, 0.8f));
+        Geometry regInputBoxBorder = makeQuad("RegInputBoxBorder", 420f, 2f, 50f, ph - 116f, new ColorRGBA(0.2f, 0.8f, 1.0f, 0.8f));
         nameInputNode.attachChild(regInputBoxBorder);
 
         regInputText = new BitmapText(font);
-        regInputText.setSize(font.getCharSet().getRenderedSize() * 1.6f);
+        regInputText.setSize(font.getCharSet().getRenderedSize() * 1.4f);
         regInputText.setColor(new ColorRGBA(0.2f, 0.95f, 1.0f, 1f));
         regInputText.setText("Maheep|");
-        regInputText.setLocalTranslation(65f, ph - 105f, 0.1f);
+        regInputText.setLocalTranslation(65f, ph - 88f, 0.1f);
         nameInputNode.attachChild(regInputText);
 
         // [ < PREV ] button
-        Geometry prevBtnBg = makeQuad("RegPrevBtnBg", 100f, 50f, 485f, ph - 138f, new ColorRGBA(0.12f, 0.22f, 0.40f, 0.95f));
+        Geometry prevBtnBg = makeQuad("RegPrevBtnBg", 100f, 42f, 485f, ph - 116f, new ColorRGBA(0.12f, 0.22f, 0.40f, 0.95f));
         nameInputNode.attachChild(prevBtnBg);
         BitmapText prevBtnText = new BitmapText(font);
-        prevBtnText.setSize(font.getCharSet().getRenderedSize() * 1.05f);
+        prevBtnText.setSize(font.getCharSet().getRenderedSize() * 1.02f);
         prevBtnText.setColor(new ColorRGBA(0.85f, 0.95f, 1.0f, 1f));
         prevBtnText.setText("< PREV");
-        prevBtnText.setLocalTranslation(498f, ph - 107f, 0.1f);
+        prevBtnText.setLocalTranslation(498f, ph - 88f, 0.1f);
         nameInputNode.attachChild(prevBtnText);
 
         // [ NEXT > ] button
-        Geometry nextBtnBg = makeQuad("RegNextBtnBg", 100f, 50f, 595f, ph - 138f, new ColorRGBA(0.12f, 0.22f, 0.40f, 0.95f));
+        Geometry nextBtnBg = makeQuad("RegNextBtnBg", 100f, 42f, 595f, ph - 116f, new ColorRGBA(0.12f, 0.22f, 0.40f, 0.95f));
         nameInputNode.attachChild(nextBtnBg);
         BitmapText nextBtnText = new BitmapText(font);
-        nextBtnText.setSize(font.getCharSet().getRenderedSize() * 1.05f);
+        nextBtnText.setSize(font.getCharSet().getRenderedSize() * 1.02f);
         nextBtnText.setColor(new ColorRGBA(0.85f, 0.95f, 1.0f, 1f));
         nextBtnText.setText("NEXT >");
-        nextBtnText.setLocalTranslation(608f, ph - 107f, 0.1f);
+        nextBtnText.setLocalTranslation(608f, ph - 88f, 0.1f);
         nameInputNode.attachChild(nextBtnText);
 
-        // Action row: CLEAR, START FLIGHT, EDIT QUIZ & SETTINGS
-        // [ CLEAR ]
-        Geometry delBtnBg = makeQuad("RegDelBtnBg", 110f, 46f, 50f, ph - 198f, new ColorRGBA(0.35f, 0.12f, 0.15f, 0.95f));
+        // ── 2. Aircraft Selection Row ─────────────────────────────────────────
+        BitmapText airPrompt = new BitmapText(font);
+        airPrompt.setSize(font.getCharSet().getRenderedSize() * 1.05f);
+        airPrompt.setColor(new ColorRGBA(1.0f, 0.85f, 0.25f, 1f));
+        airPrompt.setText("2. FLIGHT VEHICLE (BIPLANE / ATTACK HELI / PAGANI CAR):");
+        airPrompt.setLocalTranslation(50f, ph - 128f, 0f);
+        nameInputNode.attachChild(airPrompt);
+
+        // Aircraft Prev Button: x [50, 100], y [ph - 176, ph - 136]
+        Geometry airPrevBg = makeQuad("AirPrevBg", 50f, 40f, 50f, ph - 176f, new ColorRGBA(0.12f, 0.22f, 0.40f, 0.95f));
+        nameInputNode.attachChild(airPrevBg);
+        BitmapText airPrevText = new BitmapText(font);
+        airPrevText.setText("<");
+        airPrevText.setLocalTranslation(68f, ph - 149f, 0.1f);
+        nameInputNode.attachChild(airPrevText);
+
+        // Aircraft Display Box: x [108, 637], y [ph - 176, ph - 136]
+        Geometry airBoxBg = makeQuad("AirBoxBg", 529f, 40f, 108f, ph - 176f, new ColorRGBA(0.06f, 0.12f, 0.22f, 0.95f));
+        nameInputNode.attachChild(airBoxBg);
+        Geometry airBoxBorder = makeQuad("AirBoxBorder", 529f, 2f, 108f, ph - 176f, new ColorRGBA(1.0f, 0.75f, 0.2f, 0.85f));
+        nameInputNode.attachChild(airBoxBorder);
+
+        regAircraftText = new BitmapText(font);
+        regAircraftText.setSize(font.getCharSet().getRenderedSize() * 1.02f);
+        regAircraftText.setColor(new ColorRGBA(1.0f, 0.95f, 0.6f, 1f));
+        regAircraftText.setText("[ ✈ STUNT BIPLANE ] — Aerobatic stunt plane with spinning propeller");
+        regAircraftText.setLocalTranslation(120f, ph - 149f, 0.1f);
+        nameInputNode.attachChild(regAircraftText);
+
+        // Aircraft Next Button: x [645, 695], y [ph - 176, ph - 136]
+        Geometry airNextBg = makeQuad("AirNextBg", 50f, 40f, 645f, ph - 176f, new ColorRGBA(0.12f, 0.22f, 0.40f, 0.95f));
+        nameInputNode.attachChild(airNextBg);
+        BitmapText airNextText = new BitmapText(font);
+        airNextText.setText(">");
+        airNextText.setLocalTranslation(663f, ph - 149f, 0.1f);
+        nameInputNode.attachChild(airNextText);
+
+        // ── 3. Action row: CLEAR, START FLIGHT, EDIT QUIZ & SETTINGS ─────────
+        // y: ph - 232f, h: 42f
+        Geometry delBtnBg = makeQuad("RegDelBtnBg", 110f, 42f, 50f, ph - 232f, new ColorRGBA(0.35f, 0.12f, 0.15f, 0.95f));
         nameInputNode.attachChild(delBtnBg);
         BitmapText delBtnText = new BitmapText(font);
         delBtnText.setSize(font.getCharSet().getRenderedSize() * 1.0f);
         delBtnText.setColor(new ColorRGBA(1.0f, 0.75f, 0.75f, 1f));
         delBtnText.setText("CLEAR");
-        delBtnText.setLocalTranslation(75f, ph - 169f, 0.1f);
+        delBtnText.setLocalTranslation(75f, ph - 204f, 0.1f);
         nameInputNode.attachChild(delBtnText);
 
         // [ ► START FLIGHT ◄ ]
-        Geometry soloBtnBg = makeQuad("RegSoloBtnBg", 280f, 46f, 180f, ph - 198f, new ColorRGBA(0.10f, 0.48f, 0.22f, 0.95f));
+        Geometry soloBtnBg = makeQuad("RegSoloBtnBg", 280f, 42f, 180f, ph - 232f, new ColorRGBA(0.10f, 0.48f, 0.22f, 0.95f));
         nameInputNode.attachChild(soloBtnBg);
-        Geometry soloBtnBorder = makeQuad("RegSoloBorder", 280f, 3f, 180f, ph - 155f, new ColorRGBA(0.3f, 1.0f, 0.5f, 1f));
+        Geometry soloBtnBorder = makeQuad("RegSoloBorder", 280f, 3f, 180f, ph - 192f, new ColorRGBA(0.3f, 1.0f, 0.5f, 1f));
         nameInputNode.attachChild(soloBtnBorder);
         BitmapText soloBtnText = new BitmapText(font);
         soloBtnText.setSize(font.getCharSet().getRenderedSize() * 1.15f);
         soloBtnText.setColor(new ColorRGBA(1.0f, 1.0f, 0.4f, 1f));
         soloBtnText.setText("► START FLIGHT ◄");
-        soloBtnText.setLocalTranslation(210f, ph - 168f, 0.1f);
+        soloBtnText.setLocalTranslation(210f, ph - 203f, 0.1f);
         nameInputNode.attachChild(soloBtnText);
 
         // [ ✏ EDIT QUIZ & SETTINGS ]
-        Geometry edBtnBg = makeQuad("RegEdBtnBg", 250f, 46f, 480f, ph - 198f, new ColorRGBA(0.55f, 0.40f, 0.10f, 0.95f));
+        Geometry edBtnBg = makeQuad("RegEdBtnBg", 255f, 42f, 480f, ph - 232f, new ColorRGBA(0.55f, 0.40f, 0.10f, 0.95f));
         nameInputNode.attachChild(edBtnBg);
-        Geometry edBtnBorder = makeQuad("RegEdBorder", 250f, 3f, 480f, ph - 155f, new ColorRGBA(1.0f, 0.85f, 0.3f, 1f));
+        Geometry edBtnBorder = makeQuad("RegEdBorder", 255f, 3f, 480f, ph - 192f, new ColorRGBA(1.0f, 0.85f, 0.3f, 1f));
         nameInputNode.attachChild(edBtnBorder);
         BitmapText edBtnText = new BitmapText(font);
         edBtnText.setSize(font.getCharSet().getRenderedSize() * 1.02f);
         edBtnText.setColor(new ColorRGBA(1.0f, 0.95f, 0.85f, 1f));
         edBtnText.setText("✏ EDIT QUIZ & SETTINGS");
-        edBtnText.setLocalTranslation(495f, ph - 168f, 0.1f);
+        edBtnText.setLocalTranslation(495f, ph - 203f, 0.1f);
         nameInputNode.attachChild(edBtnText);
 
         // Leaderboard preview header
         regLeaderboardHeader = new BitmapText(font);
-        regLeaderboardHeader.setSize(font.getCharSet().getRenderedSize() * 1.1f);
+        regLeaderboardHeader.setSize(font.getCharSet().getRenderedSize() * 1.08f);
         regLeaderboardHeader.setColor(new ColorRGBA(1.0f, 0.85f, 0.25f, 1f));
         regLeaderboardHeader.setText("— DATABASE HALL OF FAME (TOP PILOTS) —");
-        regLeaderboardHeader.setLocalTranslation(50f, ph - 230f, 0f);
+        regLeaderboardHeader.setLocalTranslation(50f, ph - 258f, 0f);
         nameInputNode.attachChild(regLeaderboardHeader);
 
         regLeaderboardList = new BitmapText(font);
         regLeaderboardList.setSize(font.getCharSet().getRenderedSize() * 0.95f);
         regLeaderboardList.setColor(new ColorRGBA(0.85f, 0.90f, 0.95f, 1f));
         regLeaderboardList.setText("Connecting to database...");
-        regLeaderboardList.setLocalTranslation(50f, ph - 265f, 0f);
+        regLeaderboardList.setLocalTranslation(50f, ph - 288f, 0f);
         nameInputNode.attachChild(regLeaderboardList);
 
         // Footer hint
         regFooterHint = new BitmapText(font);
         regFooterHint.setSize(font.getCharSet().getRenderedSize() * 0.92f);
         regFooterHint.setColor(new ColorRGBA(0.7f, 0.85f, 0.95f, 0.85f));
-        regFooterHint.setText("► SELECT/TYPE CALLSIGN  •  START: Solo Flight  •  EDIT: Custom Questions & Settings");
-        regFooterHint.setLocalTranslation(50f, 40f, 0f);
+        regFooterHint.setText("► TAB / V: Switch Plane / Heli / Car  •  ENTER: Launch Flight  •  EDIT: Custom Quiz");
+        regFooterHint.setLocalTranslation(50f, 32f, 0f);
         nameInputNode.attachChild(regFooterHint);
 
         nameInputNode.setCullHint(Spatial.CullHint.Always);
@@ -695,54 +746,72 @@ public class HudState extends AbstractAppState {
 
         // Terrain Switcher
         edTerrainText = new BitmapText(font);
-        edTerrainText.setSize(font.getCharSet().getRenderedSize() * 1.0f);
+        edTerrainText.setSize(font.getCharSet().getRenderedSize() * 0.95f);
         edTerrainText.setText("TERRAIN: [ GRASS ]");
-        edTerrainText.setLocalTranslation(50f, ph - 92f, 0f);
+        edTerrainText.setLocalTranslation(48f, ph - 92f, 0f);
         editorNode.attachChild(edTerrainText);
 
-        Geometry terPrev = makeQuad("EdTerPrev", 35f, 28f, 210f, ph - 114f, new ColorRGBA(0.12f, 0.25f, 0.45f, 0.95f));
+        Geometry terPrev = makeQuad("EdTerPrev", 30f, 26f, 185f, ph - 113f, new ColorRGBA(0.12f, 0.25f, 0.45f, 0.95f));
         editorNode.attachChild(terPrev);
-        BitmapText tpText = new BitmapText(font); tpText.setText("<"); tpText.setLocalTranslation(223f, ph - 92f, 0.1f);
+        BitmapText tpText = new BitmapText(font); tpText.setText("<"); tpText.setLocalTranslation(196f, ph - 92f, 0.1f);
         editorNode.attachChild(tpText);
 
-        Geometry terNext = makeQuad("EdTerNext", 35f, 28f, 250f, ph - 114f, new ColorRGBA(0.12f, 0.25f, 0.45f, 0.95f));
+        Geometry terNext = makeQuad("EdTerNext", 30f, 26f, 220f, ph - 113f, new ColorRGBA(0.12f, 0.25f, 0.45f, 0.95f));
         editorNode.attachChild(terNext);
-        BitmapText tnText = new BitmapText(font); tnText.setText(">"); tnText.setLocalTranslation(263f, ph - 92f, 0.1f);
+        BitmapText tnText = new BitmapText(font); tnText.setText(">"); tnText.setLocalTranslation(231f, ph - 92f, 0.1f);
         editorNode.attachChild(tnText);
 
         // Lives Switcher
         edLivesText = new BitmapText(font);
-        edLivesText.setSize(font.getCharSet().getRenderedSize() * 1.0f);
+        edLivesText.setSize(font.getCharSet().getRenderedSize() * 0.95f);
         edLivesText.setText("LIVES: [ 3 ]");
-        edLivesText.setLocalTranslation(310f, ph - 92f, 0f);
+        edLivesText.setLocalTranslation(265f, ph - 92f, 0f);
         editorNode.attachChild(edLivesText);
 
-        Geometry livPrev = makeQuad("EdLivPrev", 35f, 28f, 415f, ph - 114f, new ColorRGBA(0.12f, 0.25f, 0.45f, 0.95f));
+        Geometry livPrev = makeQuad("EdLivPrev", 30f, 26f, 355f, ph - 113f, new ColorRGBA(0.12f, 0.25f, 0.45f, 0.95f));
         editorNode.attachChild(livPrev);
-        BitmapText lpText = new BitmapText(font); lpText.setText("-"); lpText.setLocalTranslation(428f, ph - 92f, 0.1f);
+        BitmapText lpText = new BitmapText(font); lpText.setText("-"); lpText.setLocalTranslation(366f, ph - 92f, 0.1f);
         editorNode.attachChild(lpText);
 
-        Geometry livNext = makeQuad("EdLivNext", 35f, 28f, 455f, ph - 114f, new ColorRGBA(0.12f, 0.25f, 0.45f, 0.95f));
+        Geometry livNext = makeQuad("EdLivNext", 30f, 26f, 390f, ph - 113f, new ColorRGBA(0.12f, 0.25f, 0.45f, 0.95f));
         editorNode.attachChild(livNext);
-        BitmapText lnText = new BitmapText(font); lnText.setText("+"); lnText.setLocalTranslation(467f, ph - 92f, 0.1f);
+        BitmapText lnText = new BitmapText(font); lnText.setText("+"); lnText.setLocalTranslation(401f, ph - 92f, 0.1f);
         editorNode.attachChild(lnText);
 
         // Timer Switcher
         edTimerText = new BitmapText(font);
-        edTimerText.setSize(font.getCharSet().getRenderedSize() * 1.0f);
-        edTimerText.setText("TIMER: [ 15s ]");
-        edTimerText.setLocalTranslation(515f, ph - 92f, 0f);
+        edTimerText.setSize(font.getCharSet().getRenderedSize() * 0.95f);
+        edTimerText.setText("TIME: [ 15s ]");
+        edTimerText.setLocalTranslation(435f, ph - 92f, 0f);
         editorNode.attachChild(edTimerText);
 
-        Geometry timPrev = makeQuad("EdTimPrev", 35f, 28f, 635f, ph - 114f, new ColorRGBA(0.12f, 0.25f, 0.45f, 0.95f));
+        Geometry timPrev = makeQuad("EdTimPrev", 30f, 26f, 520f, ph - 113f, new ColorRGBA(0.12f, 0.25f, 0.45f, 0.95f));
         editorNode.attachChild(timPrev);
-        BitmapText tmText = new BitmapText(font); tmText.setText("-"); tmText.setLocalTranslation(648f, ph - 92f, 0.1f);
+        BitmapText tmText = new BitmapText(font); tmText.setText("-"); tmText.setLocalTranslation(531f, ph - 92f, 0.1f);
         editorNode.attachChild(tmText);
 
-        Geometry timNext = makeQuad("EdTimNext", 35f, 28f, 675f, ph - 114f, new ColorRGBA(0.12f, 0.25f, 0.45f, 0.95f));
+        Geometry timNext = makeQuad("EdTimNext", 30f, 26f, 555f, ph - 113f, new ColorRGBA(0.12f, 0.25f, 0.45f, 0.95f));
         editorNode.attachChild(timNext);
-        BitmapText tp2Text = new BitmapText(font); tp2Text.setText("+"); tp2Text.setLocalTranslation(687f, ph - 92f, 0.1f);
+        BitmapText tp2Text = new BitmapText(font); tp2Text.setText("+"); tp2Text.setLocalTranslation(566f, ph - 92f, 0.1f);
         editorNode.attachChild(tp2Text);
+
+        // Aircraft Switcher
+        edAircraftText = new BitmapText(font);
+        edAircraftText.setSize(font.getCharSet().getRenderedSize() * 0.95f);
+        edAircraftText.setColor(new ColorRGBA(1.0f, 0.85f, 0.3f, 1f));
+        edAircraftText.setText("VEHICLE: [ ✈ PLANE ]");
+        edAircraftText.setLocalTranslation(600f, ph - 92f, 0f);
+        editorNode.attachChild(edAircraftText);
+
+        Geometry airPrevEd = makeQuad("EdAirPrev", 30f, 26f, 735f, ph - 113f, new ColorRGBA(0.12f, 0.25f, 0.45f, 0.95f));
+        editorNode.attachChild(airPrevEd);
+        BitmapText apText = new BitmapText(font); apText.setText("<"); apText.setLocalTranslation(746f, ph - 92f, 0.1f);
+        editorNode.attachChild(apText);
+
+        Geometry airNextEd = makeQuad("EdAirNext", 30f, 26f, 770f, ph - 113f, new ColorRGBA(0.12f, 0.25f, 0.45f, 0.95f));
+        editorNode.attachChild(airNextEd);
+        BitmapText anText = new BitmapText(font); anText.setText(">"); anText.setLocalTranslation(781f, ph - 92f, 0.1f);
+        editorNode.attachChild(anText);
 
         // Section 2: Questions Catalog & Options Editor Container Frame
         Geometry qFrame = makeQuad("EdQFrame", pw - 70f, ph - 225f, 35f, 82f, new ColorRGBA(0.01f, 0.02f, 0.06f, 0.92f));
@@ -972,6 +1041,15 @@ public class HudState extends AbstractAppState {
         edLivesText.setText("LIVES: [ " + (lives == -1 ? "INF" : lives) + " ]");
         float timer = TIMER_PRESETS[timerPresetIndex];
         edTimerText.setText("TIMER: [ " + (timer == -1 ? "OFF" : (int) timer + "s") + " ]");
+        if (edAircraftText != null) {
+            QuizSettings.AircraftType chosenAir = AIRCRAFT_PRESETS[aircraftPresetIndex];
+            String airLabel = switch (chosenAir) {
+                case HELICOPTER -> "HELI";
+                case FLYING_CAR -> "CAR";
+                default         -> "PLANE";
+            };
+            edAircraftText.setText("VEHICLE: [ " + airLabel + " ]");
+        }
 
         if (editorQuestions.isEmpty()) {
             edQNavText.setText("NO QUESTIONS (TAP + NEW Q TO ADD)");
@@ -1507,20 +1585,38 @@ public class HudState extends AbstractAppState {
                 return;
             }
 
-            // [ CLEAR ]: x [50, 160], y [ph - 198, ph - 152]
-            if (lx >= 50f && lx <= 160f && ly >= ph - 198f && ly <= ph - 152f) {
+            // Aircraft Prev: x [50, 100], y [ph - 176, ph - 136]
+            if (lx >= 50f && lx <= 100f && ly >= ph - 176f && ly <= ph - 136f) {
+                cycleAircraft(-1);
+                return;
+            }
+
+            // Aircraft Next: x [645, 695], y [ph - 176, ph - 136]
+            if (lx >= 645f && lx <= 695f && ly >= ph - 176f && ly <= ph - 136f) {
+                cycleAircraft(1);
+                return;
+            }
+
+            // Aircraft Display Box (tap anywhere to cycle): x [108, 637], y [ph - 176, ph - 136]
+            if (lx >= 108f && lx <= 637f && ly >= ph - 176f && ly <= ph - 136f) {
+                cycleAircraft(1);
+                return;
+            }
+
+            // [ CLEAR ]: x [50, 160], y [ph - 232, ph - 190]
+            if (lx >= 50f && lx <= 160f && ly >= ph - 232f && ly <= ph - 190f) {
                 nameBuffer.setLength(0);
                 return;
             }
 
-            // [ ► START FLIGHT ◄ ]: x [180, 460], y [ph - 198, ph - 152]
-            if (lx >= 180f && lx <= 460f && ly >= ph - 198f && ly <= ph - 152f) {
+            // [ ► START FLIGHT ◄ ]: x [180, 460], y [ph - 232, ph - 190]
+            if (lx >= 180f && lx <= 460f && ly >= ph - 232f && ly <= ph - 190f) {
                 launchSoloFlight();
                 return;
             }
 
-            // [ ✏ EDIT QUIZ & SETTINGS ]: x [480, 740], y [ph - 198, ph - 152]
-            if (lx >= 480f && lx <= 740f && ly >= ph - 198f && ly <= ph - 152f) {
+            // [ ✏ EDIT QUIZ & SETTINGS ]: x [480, 745], y [ph - 232, ph - 190]
+            if (lx >= 480f && lx <= 745f && ly >= ph - 232f && ly <= ph - 190f) {
                 inputCooldown = 0.3f;
                 currentTerminalScreen = TerminalScreen.QUIZ_EDITOR;
                 editorQuestions = new ArrayList<>(QuizLoader.load("questions.txt"));
@@ -1539,45 +1635,59 @@ public class HudState extends AbstractAppState {
             float lx = x - px;
             float ly = y - py;
 
-            // Terrain Prev/Next: x [210, 245] / [250, 285], y [ph - 114, ph - 86]
-            if (lx >= 210f && lx <= 245f && ly >= ph - 114f && ly <= ph - 86f) {
+            // Terrain Prev/Next: x [185, 215] / [220, 250], y [ph - 113, ph - 87]
+            if (lx >= 185f && lx <= 215f && ly >= ph - 113f && ly <= ph - 87f) {
                 applyEditorTextBuffer();
                 activeEditField = EditorField.NONE;
                 terrainPresetIndex = (terrainPresetIndex - 1 + TERRAIN_PRESETS.length) % TERRAIN_PRESETS.length;
                 return;
             }
-            if (lx >= 250f && lx <= 285f && ly >= ph - 114f && ly <= ph - 86f) {
+            if (lx >= 220f && lx <= 250f && ly >= ph - 113f && ly <= ph - 87f) {
                 applyEditorTextBuffer();
                 activeEditField = EditorField.NONE;
                 terrainPresetIndex = (terrainPresetIndex + 1) % TERRAIN_PRESETS.length;
                 return;
             }
 
-            // Lives Prev/Next: x [415, 450] / [455, 490], y [ph - 114, ph - 86]
-            if (lx >= 415f && lx <= 450f && ly >= ph - 114f && ly <= ph - 86f) {
+            // Lives Prev/Next: x [355, 385] / [390, 420], y [ph - 113, ph - 87]
+            if (lx >= 355f && lx <= 385f && ly >= ph - 113f && ly <= ph - 87f) {
                 applyEditorTextBuffer();
                 activeEditField = EditorField.NONE;
                 livesPresetIndex = (livesPresetIndex - 1 + LIVES_PRESETS.length) % LIVES_PRESETS.length;
                 return;
             }
-            if (lx >= 455f && lx <= 490f && ly >= ph - 114f && ly <= ph - 86f) {
+            if (lx >= 390f && lx <= 420f && ly >= ph - 113f && ly <= ph - 87f) {
                 applyEditorTextBuffer();
                 activeEditField = EditorField.NONE;
                 livesPresetIndex = (livesPresetIndex + 1) % LIVES_PRESETS.length;
                 return;
             }
 
-            // Timer Prev/Next: x [635, 670] / [675, 710], y [ph - 114, ph - 86]
-            if (lx >= 635f && lx <= 670f && ly >= ph - 114f && ly <= ph - 86f) {
+            // Timer Prev/Next: x [520, 550] / [555, 585], y [ph - 113, ph - 87]
+            if (lx >= 520f && lx <= 550f && ly >= ph - 113f && ly <= ph - 87f) {
                 applyEditorTextBuffer();
                 activeEditField = EditorField.NONE;
                 timerPresetIndex = (timerPresetIndex - 1 + TIMER_PRESETS.length) % TIMER_PRESETS.length;
                 return;
             }
-            if (lx >= 675f && lx <= 710f && ly >= ph - 114f && ly <= ph - 86f) {
+            if (lx >= 555f && lx <= 585f && ly >= ph - 113f && ly <= ph - 87f) {
                 applyEditorTextBuffer();
                 activeEditField = EditorField.NONE;
                 timerPresetIndex = (timerPresetIndex + 1) % TIMER_PRESETS.length;
+                return;
+            }
+
+            // Aircraft Prev/Next: x [735, 765] / [770, 800], y [ph - 113, ph - 87]
+            if (lx >= 735f && lx <= 765f && ly >= ph - 113f && ly <= ph - 87f) {
+                applyEditorTextBuffer();
+                activeEditField = EditorField.NONE;
+                cycleAircraft(-1);
+                return;
+            }
+            if (lx >= 770f && lx <= 800f && ly >= ph - 113f && ly <= ph - 87f) {
+                applyEditorTextBuffer();
+                activeEditField = EditorField.NONE;
+                cycleAircraft(1);
                 return;
             }
 
@@ -1774,10 +1884,15 @@ public class HudState extends AbstractAppState {
                 editorSettings.setTerrain(TERRAIN_PRESETS[terrainPresetIndex]);
                 editorSettings.setMaxWrong(LIVES_PRESETS[livesPresetIndex]);
                 editorSettings.setTimePerQuestion(TIMER_PRESETS[timerPresetIndex]);
+                editorSettings.setAircraft(AIRCRAFT_PRESETS[aircraftPresetIndex]);
 
                 boolean saved = QuizLoader.saveQuestionsAndSettings(editorQuestions, editorSettings);
                 if (app != null) {
                     app.updateGroundTerrain();
+                    PlaneController pc = app.getStateManager().getState(PlaneController.class);
+                    if (pc != null) {
+                        pc.switchAircraft(AIRCRAFT_PRESETS[aircraftPresetIndex]);
+                    }
                     QuizDatabase db = app.getQuizDatabase();
                     if (db != null) {
                         db.saveCustomQuiz("Custom AeroQuiz",
@@ -1797,6 +1912,46 @@ public class HudState extends AbstractAppState {
                 currentTerminalScreen = TerminalScreen.PILOT_TERMINAL;
                 return;
             }
+        }
+    }
+
+    private void cycleAircraft(int dir) {
+        aircraftPresetIndex = (aircraftPresetIndex + dir + AIRCRAFT_PRESETS.length) % AIRCRAFT_PRESETS.length;
+        QuizSettings.AircraftType chosen = AIRCRAFT_PRESETS[aircraftPresetIndex];
+        if (QuizLoader.getSettings() != null) {
+            QuizLoader.getSettings().setAircraft(chosen);
+            QuizLoader.saveQuestionsAndSettings(null, QuizLoader.getSettings());
+        }
+        if (editorSettings != null) {
+            editorSettings.setAircraft(chosen);
+        }
+        PlaneController pc = (app != null) ? app.getStateManager().getState(PlaneController.class) : null;
+        if (pc != null) {
+            pc.switchAircraft(chosen);
+        }
+        updateAircraftUiText();
+    }
+
+    private void updateAircraftUiText() {
+        if (aircraftPresetIndex < 0 || aircraftPresetIndex >= AIRCRAFT_PRESETS.length) {
+            aircraftPresetIndex = 0;
+        }
+        QuizSettings.AircraftType chosen = AIRCRAFT_PRESETS[aircraftPresetIndex];
+        if (regAircraftText != null) {
+            String title = switch (chosen) {
+                case HELICOPTER -> "[ 🚁 ATTACK HELI ]";
+                case FLYING_CAR -> "[ 🏎 PAGANI AERO-CAR ]";
+                default         -> "[ ✈ STUNT BIPLANE ]";
+            };
+            regAircraftText.setText(title + " — " + chosen.getDescription());
+        }
+        if (edAircraftText != null) {
+            String airLabel = switch (chosen) {
+                case HELICOPTER -> "HELI";
+                case FLYING_CAR -> "CAR";
+                default         -> "PLANE";
+            };
+            edAircraftText.setText("VEHICLE: [ " + airLabel + " ]");
         }
     }
 
@@ -1824,6 +1979,8 @@ public class HudState extends AbstractAppState {
 
                     if (code == KeyInput.KEY_RETURN || code == KeyInput.KEY_NUMPADENTER) {
                         launchSoloFlight();
+                    } else if (code == KeyInput.KEY_V || code == KeyInput.KEY_TAB) {
+                        cycleAircraft(1);
                     } else if (code == KeyInput.KEY_BACK) {
                         if (nameBuffer.length() > 0) {
                             nameBuffer.deleteCharAt(nameBuffer.length() - 1);
