@@ -151,6 +151,7 @@ public class PlaneController extends AbstractAppState {
     private float   firePhase   = 0f;
     private boolean dying       = false;
     private float   deathTimer  = 0f;
+    private boolean groundImpactDone = false;
 
     // Camera shake
     private float shakeTrauma = 0f;
@@ -297,9 +298,10 @@ public class PlaneController extends AbstractAppState {
      * a clean starting state ready for takeoff.
      */
     public void resetPlane() {
-        dying       = false;
-        deathTimer  = 0f;
-        shakeTrauma = 0f;
+        dying            = false;
+        deathTimer       = 0f;
+        groundImpactDone = false;
+        shakeTrauma      = 0f;
 
         shifting     = false;
         shiftTimer   = 0f;
@@ -411,8 +413,9 @@ public class PlaneController extends AbstractAppState {
 
     public void triggerDeath() {
         if (dying) return;
-        dying      = true;
-        deathTimer = 0f;
+        dying            = true;
+        deathTimer       = 0f;
+        groundImpactDone = false;
         addCameraShake(1.0f);
         attachFireNode();
 
@@ -924,10 +927,37 @@ public class PlaneController extends AbstractAppState {
         Quaternion spinX = new Quaternion().fromAngleAxis(spinAngle, Vector3f.UNIT_X);
         Quaternion spinZ = new Quaternion().fromAngleAxis(spinAngle * 0.7f, Vector3f.UNIT_Z);
         planeNode.setLocalRotation(spinX.mult(spinZ));
-        planeNode.move(0f, -DEATH_DESCENT_SPEED * tpf, -PLANE_SPEED * 0.4f * tpf);
+
+        Vector3f cur = planeNode.getLocalTranslation();
+        float groundLimit = -2.1f;
+        if (cur.y > groundLimit) {
+            planeNode.move(0f, -DEATH_DESCENT_SPEED * tpf, -PLANE_SPEED * 0.45f * tpf);
+            if (planeNode.getLocalTranslation().y <= groundLimit) {
+                planeNode.setLocalTranslation(cur.x, groundLimit, cur.z);
+                if (!groundImpactDone) {
+                    groundImpactDone = true;
+                    addCameraShake(1.3f);
+                    AudioFX audio = app.getAudioFX();
+                    if (audio != null) {
+                        audio.playExplosion();
+                    }
+                    Vector3f p = planeNode.getWorldTranslation();
+                    for (int i = 0; i < 4; i++) {
+                        spawnExplosion(p.add((rng.nextFloat() - 0.5f) * 2.0f,
+                                             rng.nextFloat() * 1.2f,
+                                             (rng.nextFloat() - 0.5f) * 2.0f),
+                                       ColorRGBA.Orange);
+                    }
+                }
+            }
+        } else {
+            // Skid along ground level with friction
+            float skidDecay = Math.max(0f, 1f - (deathTimer - 1.2f) * 0.75f);
+            planeNode.move(0f, 0f, -PLANE_SPEED * 0.25f * skidDecay * tpf);
+        }
 
         // Continuous trail of fiery blasts during death spiral
-        if (deathTimer < 3.0f && rng.nextFloat() < 0.35f) {
+        if (deathTimer < 2.8f && rng.nextFloat() < 0.35f) {
             Vector3f p = planeNode.getWorldTranslation();
             spawnExplosion(p.add((rng.nextFloat() - 0.5f) * 1.6f,
                                  (rng.nextFloat() - 0.5f) * 1.2f,

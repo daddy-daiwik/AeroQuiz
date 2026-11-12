@@ -28,10 +28,12 @@ public class GameState extends AbstractAppState {
         NAME_INPUT,
         PLAYING,
         QUESTION_COOLDOWN,
+        CRASHING,
         GAME_OVER
     }
 
     private static final int CORRECT_SCORE_INC = 10;
+    private static final float CRASH_SEQUENCE_DURATION = 2.8f;
 
     /** Key action names registered with input manager (1 to 6). */
     private static final String[] ACTION_NAMES = {
@@ -91,10 +93,21 @@ public class GameState extends AbstractAppState {
 
     private float cooldownSafetyTimer = 0f;
     private float delayedCompletionTimer = 0f;
+    private float delayedCrashTimer = 0f;
 
     @Override
     public void update(float tpf) {
         if (!isEnabled()) return;
+
+        // Delayed crash sequence: let player watch the full 3D plane crash and fall animation
+        if (delayedCrashTimer > 0f) {
+            delayedCrashTimer -= tpf;
+            if (delayedCrashTimer <= 0f) {
+                delayedCrashTimer = 0f;
+                triggerGameOver();
+            }
+            return;
+        }
 
         // Delayed victory completion after last question bullet impacts and explodes
         if (delayedCompletionTimer > 0f) {
@@ -173,6 +186,7 @@ public class GameState extends AbstractAppState {
         totalFlightTime = 0f;
         phase          = Phase.PLAYING;
         cooldownSafetyTimer = 0f;
+        delayedCrashTimer = 0f;
         resetTimer();
 
         // Reset plane transform, FX, camera, and death state
@@ -242,6 +256,7 @@ public class GameState extends AbstractAppState {
         currentIndex = 0;
         cooldownSafetyTimer = 0f;
         delayedCompletionTimer = 0f;
+        delayedCrashTimer = 0f;
 
         if (masterQuestions != null && !masterQuestions.isEmpty()) {
             questions = new ArrayList<>(masterQuestions);
@@ -264,6 +279,7 @@ public class GameState extends AbstractAppState {
     public int     getScore()         { return score; }
     public int     getWrongHits()     { return wrongHits; }
     public boolean isGameOver()       { return phase == Phase.GAME_OVER; }
+    public boolean isCrashing()       { return phase == Phase.CRASHING; }
     public boolean isQuizCompleted()  { return quizCompleted; }
     public float   getQuestionTimer() { return questionTimer; }
 
@@ -319,8 +335,8 @@ public class GameState extends AbstractAppState {
         LOG.info("Wrong hit registered! Total=" + wrongHits + " / " + settings.getMaxWrong());
 
         if (settings.getMaxWrong() != -1 && wrongHits >= settings.getMaxWrong()) {
-            LOG.info("Max wrong hits reached (" + settings.getMaxWrong() + ") — plane bursting!");
-            triggerGameOver();
+            LOG.info("Max wrong hits reached (" + settings.getMaxWrong() + ") — starting plane crash sequence!");
+            startCrashSequence();
         } else {
             ObstacleSpawner spawner = app.getStateManager().getState(ObstacleSpawner.class);
             if (spawner != null) {
@@ -474,9 +490,10 @@ public class GameState extends AbstractAppState {
         LOG.info("QUIZ COMPLETED! Final score: " + score + "/" + getMaxScore());
     }
 
-    private void triggerGameOver() {
-        phase = Phase.GAME_OVER;
+    private void startCrashSequence() {
+        phase = Phase.CRASHING;
         quizCompleted = false;
+        delayedCrashTimer = CRASH_SEQUENCE_DURATION;
 
         PlaneController plane = app.getStateManager().getState(PlaneController.class);
         if (plane != null) plane.triggerDeath();
@@ -487,8 +504,16 @@ public class GameState extends AbstractAppState {
         AudioFX audio = app.getAudioFX();
         if (audio != null) audio.stopMusic();
 
+        LOG.info("CRASH SEQUENCE STARTED: Playing full 3D plane falling/crashing animation for "
+                + CRASH_SEQUENCE_DURATION + "s before displaying Game Over UI.");
+    }
+
+    private void triggerGameOver() {
+        phase = Phase.GAME_OVER;
+        quizCompleted = false;
+
         persistScoreToDatabase();
-        LOG.info("GAME OVER (Plane burst) — Final score: " + score);
+        LOG.info("GAME OVER — Displaying Game Over UI. Final score: " + score);
     }
 
     private void persistScoreToDatabase() {

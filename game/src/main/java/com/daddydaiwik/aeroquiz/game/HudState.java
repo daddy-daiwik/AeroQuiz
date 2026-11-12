@@ -159,10 +159,11 @@ public class HudState extends AbstractAppState {
         GameState.Phase phase = gameState.getPhase();
         boolean inMenu = phase == GameState.Phase.NAME_INPUT;
         boolean over = gameState.isGameOver();
+        boolean crashing = gameState.isCrashing();
 
         menuScreen.setVisible(inMenu && !editorOpen);
         editorScreen.setVisible(inMenu && editorOpen);
-        flightScreen.setVisible(!inMenu && !over);
+        flightScreen.setVisible(!inMenu && !over && !crashing);
         gameOverScreen.setVisible(over);
 
         UiScreen active = activeScreen();
@@ -328,7 +329,7 @@ public class HudState extends AbstractAppState {
         if (gameState.getPhase() == GameState.Phase.NAME_INPUT) {
             if (editorOpen) handleEditorKey(code, c);
             else handleMenuKey(code, c);
-        } else if (gameState.isGameOver()) {
+        } else if (gameState.isGameOver() || gameState.isCrashing()) {
             if (code == KeyInput.KEY_RETURN || code == KeyInput.KEY_NUMPADENTER || code == KeyInput.KEY_SPACE) {
                 backToTerminal();
             } else if (code == KeyInput.KEY_R) {
