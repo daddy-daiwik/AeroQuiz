@@ -145,21 +145,34 @@ public class AssetRegistry {
         probeTexture(TEX_SNOW);
         probeTexture(TEX_WATER);
 
-        if (hasAsset("Textures/Grass004_1K-JPG_Color.jpg")) {
-            resolved.put(TEX_GRASS, "Textures/Grass004_1K-JPG_Color.jpg");
+        // Preferred: the flat pastel set produced by tools/TextureGen.java
+        String[][] aero = {
+            {TEX_GRASS, "Textures/Aero/ground_grass.png"}, {TEX_SAND, "Textures/Aero/ground_sand.png"},
+            {TEX_SNOW, "Textures/Aero/ground_snow.png"},   {TEX_WATER, "Textures/Aero/ground_water.png"}
+        };
+        boolean aeroGround = true;
+        for (String[] a : aero) aeroGround &= hasAsset(a[1]);
+        if (aeroGround) {
+            for (String[] a : aero) resolved.put(a[0], a[1]);
         }
-        if (hasAsset("Textures/Ground037_1K-JPG/Ground037_1K-JPG_Color.jpg")) {
-            resolved.put(TEX_SAND, "Textures/Ground037_1K-JPG/Ground037_1K-JPG_Color.jpg");
-        }
-        if (hasAsset("Textures/Snow005_1K-JPG/Snow005_1K-JPG_Color.jpg")) {
-            resolved.put(TEX_SNOW, "Textures/Snow005_1K-JPG/Snow005_1K-JPG_Color.jpg");
-        }
-        if (hasAsset("Textures/Water/Water_Color.jpg")) {
-            resolved.put(TEX_WATER, "Textures/Water/Water_Color.jpg");
-        } else if (hasAsset("Textures/water.jpg")) {
-            resolved.put(TEX_WATER, "Textures/water.jpg");
-        } else if (hasAsset("Textures/water.png")) {
-            resolved.put(TEX_WATER, "Textures/water.png");
+        if (!aeroGround) {
+            // Fallback: the original photographic texture set
+            if (hasAsset("Textures/Grass004_1K-JPG_Color.jpg")) {
+                resolved.put(TEX_GRASS, "Textures/Grass004_1K-JPG_Color.jpg");
+            }
+            if (hasAsset("Textures/Ground037_1K-JPG/Ground037_1K-JPG_Color.jpg")) {
+                resolved.put(TEX_SAND, "Textures/Ground037_1K-JPG/Ground037_1K-JPG_Color.jpg");
+            }
+            if (hasAsset("Textures/Snow005_1K-JPG/Snow005_1K-JPG_Color.jpg")) {
+                resolved.put(TEX_SNOW, "Textures/Snow005_1K-JPG/Snow005_1K-JPG_Color.jpg");
+            }
+            if (hasAsset("Textures/Water/Water_Color.jpg")) {
+                resolved.put(TEX_WATER, "Textures/Water/Water_Color.jpg");
+            } else if (hasAsset("Textures/water.jpg")) {
+                resolved.put(TEX_WATER, "Textures/water.jpg");
+            } else if (hasAsset("Textures/water.png")) {
+                resolved.put(TEX_WATER, "Textures/water.png");
+            }
         }
 
         // Kenney Particle Pack textures

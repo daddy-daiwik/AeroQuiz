@@ -8,6 +8,7 @@ import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.asset.AssetKey;
+import com.jme3.asset.TextureKey;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
@@ -63,6 +64,10 @@ public class AeroQuiz extends SimpleApplication {
     public void simpleInitApp() {
         flyCam.setEnabled(false);
         cam.setFrustumFar(2000f);
+
+        // jME's FPS/stat overlays are development aids; keep the shipped UI clean.
+        setDisplayStatView(false);
+        setDisplayFps(false);
 
         // ── Asset detection ───────────────────────────────────────────────────
         // Step 1: Convert any .blend/.fbx/.dae → .glb using Blender CLI,
@@ -172,8 +177,13 @@ public class AeroQuiz extends SimpleApplication {
         Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         if (assetRegistry != null && assetRegistry.has(targetKey)) {
             try {
-                Texture terrainTex = assetManager.loadTexture(assetRegistry.path(targetKey));
+                // Mipmaps + anisotropy keep the distant checker pattern from shimmering or moire-ing.
+                TextureKey texKey = new TextureKey(assetRegistry.path(targetKey), false);
+                texKey.setGenerateMips(true);
+                Texture terrainTex = assetManager.loadTexture(texKey);
                 terrainTex.setWrap(Texture.WrapMode.Repeat);
+                terrainTex.setMinFilter(Texture.MinFilter.Trilinear);
+                terrainTex.setAnisotropicFilter(8);
                 mat.setTexture("ColorMap", terrainTex);
                 mat.setColor("Color", ColorRGBA.White);
                 LOG.info("Ground: applied " + terrain + " texture: " + assetRegistry.path(targetKey));
@@ -203,8 +213,9 @@ public class AeroQuiz extends SimpleApplication {
     // -------------------------------------------------------------------------
 
     private void buildGround() {
-        Box groundMesh = new Box(200f, 0.5f, 5000f);
-        groundMesh.scaleTextureCoordinates(new Vector2f(50f, 1250f));
+        // Very wide so the flat ground fills the whole view out to the horizon; one texture repeat = 16 world units.
+        Box groundMesh = new Box(3000f, 0.5f, 5000f);
+        groundMesh.scaleTextureCoordinates(new Vector2f(375f, 625f));
         groundGeometry = new Geometry("Ground", groundMesh);
         groundGeometry.setLocalTranslation(0f, -2.5f, -4800f);
         updateGroundTerrain();
@@ -213,6 +224,14 @@ public class AeroQuiz extends SimpleApplication {
 
     private void buildSky() {
         try {
+            // Generated flat pastel sky (tools/TextureGen.java) takes priority
+            if (hasAsset("Textures/Aero/sky.png")) {
+                Texture skyTex = assetManager.loadTexture("Textures/Aero/sky.png");
+                rootNode.attachChild(SkyFactory.createSky(assetManager, skyTex, SkyFactory.EnvMapType.EquirectMap));
+                LOG.info("AeroQuiz: loaded generated pastel sky.");
+                return;
+            }
+
             // Check for 6-face undistorted cubemap first (zero projection stretch)
             if (hasAsset("Textures/sky_08_2k/sky_08_cubemap_2k/px.png")) {
                 Texture west  = assetManager.loadTexture("Textures/sky_08_2k/sky_08_cubemap_2k/nx.png");

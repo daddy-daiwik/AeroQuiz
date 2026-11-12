@@ -46,11 +46,16 @@ public class PlaneController extends AbstractAppState {
     private static final float SHARD_LIFETIME      = 0.65f;
     private static final float SHARD_SPEED         = 14f;
 
-    /** Increased target wingspan for a larger, more prominent plane model. */
+    /** Calibrated scale footprints so all vehicles visually match the stunt plane. */
     private static final float TARGET_WINGSPAN     = 6.5f;
+    private static final float TARGET_HELI_SPAN    = 5.5f;
+    private static final float TARGET_CAR_SPAN     = 4.6f;
 
-    /** Upward tilt angle (pitch up toward sky options). */
-    private static final float DEFAULT_TILT_RAD    = -8f * FastMath.DEG_TO_RAD;
+    /** Calibrated flight pitch/tilt angles per vehicle (positive = nose up, negative = nose down). */
+    private static final float PLANE_TILT_RAD      = -8.0f * FastMath.DEG_TO_RAD;
+    private static final float HELI_TILT_RAD       =  2.5f * FastMath.DEG_TO_RAD;
+    private static final float CAR_TILT_RAD        =  3.0f * FastMath.DEG_TO_RAD;
+    private static final float DEFAULT_TILT_RAD    = PLANE_TILT_RAD;
 
     private static final ColorRGBA[] DAMAGE_COLORS = {
         new ColorRGBA(0.78f, 0.78f, 0.78f, 1f),
@@ -113,7 +118,6 @@ public class PlaneController extends AbstractAppState {
     private Node     heliRotorPivot;
     private Spatial  heliTailBladeA;
     private Spatial  heliTailBladeB;
-    private final List<Spatial> animatedWheels = new ArrayList<>();
     private Vector3f laserMuzzleOffset = new Vector3f(0f, 0.2f, -2.6f);
     private QuizSettings.AircraftType currentAircraft = QuizSettings.AircraftType.PLANE;
 
@@ -174,7 +178,7 @@ public class PlaneController extends AbstractAppState {
             planeNode.move(0f, 0f, -PLANE_SPEED * tpf);
         }
 
-        // Continuously animate propellers, rotors, or wheels
+        // Continuously animate propellers and rotors
         float spinSpeed = dying ? 8f : (nameInput ? 18f : 45f);
         if (propellerPivot != null) {
             propellerPivot.rotate(0f, 0f, spinSpeed * tpf);
@@ -187,12 +191,6 @@ public class PlaneController extends AbstractAppState {
         }
         if (heliTailBladeB != null) {
             heliTailBladeB.rotate(spinSpeed * 2.2f * tpf, 0f, 0f);
-        }
-        if (!animatedWheels.isEmpty()) {
-            float wheelSpeed = (nameInput || dying) ? 0f : spinSpeed * 0.4f;
-            for (Spatial w : animatedWheels) {
-                w.rotate(wheelSpeed * tpf, 0f, 0f);
-            }
         }
 
         if (shifting)               updateShift(tpf);
@@ -355,7 +353,6 @@ public class PlaneController extends AbstractAppState {
             heliRotorPivot = null;
             heliTailBladeA = null;
             heliTailBladeB = null;
-            animatedWheels.clear();
         }
         buildPlane();
 
@@ -376,7 +373,6 @@ public class PlaneController extends AbstractAppState {
 
     public void rebuildPlane() {
         Vector3f pos = (planeNode != null) ? planeNode.getLocalTranslation().clone() : new Vector3f(0f, -0.2f, 0f);
-        Quaternion rot = (planeNode != null) ? planeNode.getLocalRotation().clone() : new Quaternion().fromAngleAxis(DEFAULT_TILT_RAD, Vector3f.UNIT_X);
 
         if (planeNode != null) {
             planeNode.removeFromParent();
@@ -387,18 +383,30 @@ public class PlaneController extends AbstractAppState {
         heliRotorPivot = null;
         heliTailBladeA = null;
         heliTailBladeB = null;
-        animatedWheels.clear();
 
         buildPlane();
 
         if (planeNode != null) {
             planeNode.setLocalTranslation(pos);
-            planeNode.setLocalRotation(rot);
+            Quaternion tilt = new Quaternion().fromAngleAxis(getAircraftTiltRad(), Vector3f.UNIT_X);
+            planeNode.setLocalRotation(tilt);
         }
     }
 
     public QuizSettings.AircraftType getCurrentAircraft() {
         return currentAircraft;
+    }
+
+    /**
+     * Resolves the aerodynamic pitch angle (in radians) for the active aircraft.
+     */
+    public float getAircraftTiltRad() {
+        if (currentAircraft == null) return PLANE_TILT_RAD;
+        return switch (currentAircraft) {
+            case HELICOPTER -> HELI_TILT_RAD;
+            case FLYING_CAR -> CAR_TILT_RAD;
+            default         -> PLANE_TILT_RAD;
+        };
     }
 
     public void triggerDeath() {
@@ -440,8 +448,8 @@ public class PlaneController extends AbstractAppState {
         // Start below options grid
         planeNode.setLocalTranslation(0f, -0.2f, 0f);
 
-        // Apply default upward tilt
-        Quaternion tilt = new Quaternion().fromAngleAxis(DEFAULT_TILT_RAD, Vector3f.UNIT_X);
+        // Apply calibrated aircraft tilt
+        Quaternion tilt = new Quaternion().fromAngleAxis(getAircraftTiltRad(), Vector3f.UNIT_X);
         planeNode.setLocalRotation(tilt);
 
         AssetRegistry reg = app.getAssetRegistry();
@@ -616,10 +624,10 @@ public class PlaneController extends AbstractAppState {
                 float halfSpan = Math.max(bb.getXExtent(), bb.getZExtent());
                 float currentSpan = halfSpan * 2f;
                 if (currentSpan > 0.001f) {
-                    float scale = 8.6f / currentSpan;
+                    float scale = TARGET_HELI_SPAN / currentSpan;
                     modelRoot.setLocalScale(scale);
-                    LOG.info(String.format("PlaneController: helicopter span %.2f -> scaled x%.3f -> 8.60",
-                            currentSpan, scale));
+                    LOG.info(String.format("PlaneController: helicopter span %.2f -> scaled x%.3f -> %.2f",
+                            currentSpan, scale, TARGET_HELI_SPAN));
                 }
             }
 
@@ -629,7 +637,7 @@ public class PlaneController extends AbstractAppState {
                 }
             });
 
-            laserMuzzleOffset = new Vector3f(0f, 0.35f, -3.2f);
+            laserMuzzleOffset = new Vector3f(0f, 0.22f, -2.2f);
             LOG.info("PlaneController: assembled 3D Apache Attack Helicopter with twin rotating rotors.");
             return true;
         } catch (Exception e) {
@@ -656,12 +664,7 @@ public class PlaneController extends AbstractAppState {
             Node modelRoot = new Node("CarModelRoot");
             modelRoot.attachChild(carBody);
 
-            carBody.depthFirstTraversal(sp -> {
-                if (sp.getName() != null && sp.getName().toLowerCase().contains("tire")) {
-                    animatedWheels.add(sp);
-                }
-            });
-
+            // Static car body in flight (no wheel rotation animation)
             Quaternion fixYaw = new Quaternion().fromAngleAxis(FastMath.PI, Vector3f.UNIT_Y);
             modelRoot.setLocalRotation(fixYaw);
 
@@ -674,10 +677,10 @@ public class PlaneController extends AbstractAppState {
                 float halfSpan = Math.max(bb.getXExtent(), bb.getZExtent());
                 float currentSpan = halfSpan * 2f;
                 if (currentSpan > 0.001f) {
-                    float scale = 7.6f / currentSpan;
+                    float scale = TARGET_CAR_SPAN / currentSpan;
                     modelRoot.setLocalScale(scale);
-                    LOG.info(String.format("PlaneController: flying car span %.2f -> scaled x%.3f -> 7.60",
-                            currentSpan, scale));
+                    LOG.info(String.format("PlaneController: flying car span %.2f -> scaled x%.3f -> %.2f",
+                            currentSpan, scale, TARGET_CAR_SPAN));
                 }
             }
 
@@ -687,7 +690,7 @@ public class PlaneController extends AbstractAppState {
                 }
             });
 
-            laserMuzzleOffset = new Vector3f(0f, 0.15f, -2.5f);
+            laserMuzzleOffset = new Vector3f(0f, 0.12f, -1.8f);
             LOG.info("PlaneController: assembled 3D Pagani Aero-Car with aerodynamic flight wings.");
             return true;
         } catch (Exception e) {
@@ -743,7 +746,7 @@ public class PlaneController extends AbstractAppState {
         // Bank roll while shifting laterally
         float bankAngle = -FastMath.clamp((shiftTargetX - shiftStartX) * 0.1f, -0.35f, 0.35f) * (1f - progress);
         Quaternion bank = new Quaternion().fromAngleAxis(bankAngle, Vector3f.UNIT_Z);
-        Quaternion tilt = new Quaternion().fromAngleAxis(DEFAULT_TILT_RAD, Vector3f.UNIT_X);
+        Quaternion tilt = new Quaternion().fromAngleAxis(getAircraftTiltRad(), Vector3f.UNIT_X);
         planeNode.setLocalRotation(tilt.mult(bank));
 
         if (shiftTimer >= SHIFT_DURATION) {

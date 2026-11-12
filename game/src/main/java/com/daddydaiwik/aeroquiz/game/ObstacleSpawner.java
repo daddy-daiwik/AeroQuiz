@@ -43,13 +43,21 @@ public class ObstacleSpawner extends AbstractAppState {
         "RED", "BLUE", "GREEN", "YELLOW", "PURPLE", "CYAN"
     };
 
+    /** Near-black green used for gate frames and labels (matches the HUD ink colour, linearised). */
+    private static final ColorRGBA INK_COLOR = srgb(0.122f, 0.176f, 0.149f);
+
+    private static ColorRGBA srgb(float r, float g, float b) {
+        return new ColorRGBA().setAsSrgb(r, g, b, 1f);
+    }
+
     public static final ColorRGBA[] COLORS = {
-        new ColorRGBA(0.95f, 0.08f, 0.08f, 1f), // Solid vivid RED
-        new ColorRGBA(0.08f, 0.45f, 0.98f, 1f), // Solid vivid BLUE
-        new ColorRGBA(0.05f, 0.82f, 0.18f, 1f), // Solid vivid GREEN
-        new ColorRGBA(0.98f, 0.78f, 0.02f, 1f), // Solid vivid GOLD / YELLOW
-        new ColorRGBA(0.75f, 0.12f, 0.92f, 1f), // Solid vivid PURPLE
-        new ColorRGBA(0.02f, 0.82f, 0.88f, 1f)  // Solid vivid CYAN
+        // authored as sRGB (what you see), stored linear for the gamma-correct renderer
+        srgb(0.96f, 0.47f, 0.45f), // coral RED
+        srgb(0.42f, 0.71f, 0.94f), // sky BLUE
+        srgb(0.48f, 0.85f, 0.56f), // mint GREEN
+        srgb(0.98f, 0.82f, 0.38f), // butter YELLOW
+        srgb(0.72f, 0.61f, 0.94f), // lilac PURPLE
+        srgb(0.44f, 0.84f, 0.82f)  // aqua CYAN
     };
 
     private AeroQuiz  app;
@@ -167,7 +175,12 @@ public class ObstacleSpawner extends AbstractAppState {
         if (count > 6) count = 6;
 
         float spawnZ = pc.getPlanePosition().z - SPAWN_AHEAD;
-        BitmapFont font = app.getAssetManager().loadFont("Interface/Fonts/Default.fnt");
+        BitmapFont font;
+        try {
+            font = app.getAssetManager().loadFont("Interface/Fonts/AeroDisplay.fnt");
+        } catch (Exception e) {
+            font = app.getAssetManager().loadFont("Interface/Fonts/Default.fnt");
+        }
         float textScale = 0.90f;
 
         // Auto-calculate box dimensions with padding based on max length of option words
@@ -213,46 +226,24 @@ public class ObstacleSpawner extends AbstractAppState {
             geo.setUserData("gridX", coord.x);
             geo.setUserData("gridY", coord.y);
 
+            // Flat ink frame: slightly larger than the face but shallower, so only a rim shows around the colour.
+            Geometry frame = new Geometry("ObstacleFrame_" + colorKey,
+                    new Box(boxHalfWidth + 0.11f, boxHalfHeight + 0.11f, boxHalfDepth - 0.03f));
+            Material frameMat = new Material(app.getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
+            frameMat.setColor("Color", INK_COLOR);
+            frame.setMaterial(frameMat);
+            obsNode.attachChild(frame);
+
             obsNode.attachChild(geo);
             currentGeometries.add(geo);
 
             String textContent = "[" + (i + 1) + "] " + optionText;
 
-            // 8-directional crisp black text outline
-            float ox = 0.024f;
-            float oy = 0.024f;
-            float[][] offsets = {
-                {-ox, 0f}, {ox, 0f}, {0f, -oy}, {0f, oy},
-                {-ox, -oy}, {ox, oy}, {-ox, oy}, {ox, -oy}
-            };
-            for (float[] off : offsets) {
-                BitmapText outline = new BitmapText(font);
-                outline.setSize(textScale);
-                outline.setText(textContent);
-                outline.setColor(ColorRGBA.Black);
-                outline.setQueueBucket(RenderQueue.Bucket.Transparent);
-                float ow = outline.getLineWidth();
-                float oh = outline.getLineHeight();
-                outline.setLocalTranslation(-ow / 2f + off[0], oh / 2f + off[1], boxHalfDepth + 0.016f);
-                outline.depthFirstTraversal(sp -> {
-                    if (sp instanceof Geometry) {
-                        Geometry g = (Geometry) sp;
-                        Material m = g.getMaterial();
-                        if (m != null) {
-                            RenderState rs = m.getAdditionalRenderState();
-                            rs.setDepthTest(false);
-                            rs.setFaceCullMode(RenderState.FaceCullMode.Off);
-                        }
-                    }
-                });
-                obsNode.attachChild(outline);
-            }
-
             // 3D text on the front face of the box (bright white on top)
             BitmapText label = new BitmapText(font);
             label.setSize(textScale);
             label.setText(textContent);
-            label.setColor(ColorRGBA.White);
+            label.setColor(INK_COLOR);
             label.setQueueBucket(RenderQueue.Bucket.Transparent);
 
             float tw = label.getLineWidth();
